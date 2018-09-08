@@ -1,0 +1,604 @@
+options:
+	bot: skUnity Butler
+	prefix: !
+	logChannel: 475337787780890644
+	staffRole: 475337675461754895
+	mutedRole: 475337676317261857
+	whiteIsBoring: 475337676992806933
+
+# Login to skUnity Butler
+on skript load:
+	load yaml "plugins/Skript/scripts/config.yml" as "config"
+	set {_token} to yaml value "token" from "config"
+	login to "%{_token}%" with the name "{@bot}"
+	wait 5 seconds
+	set {channel} to channel with id "{@logChannel}"
+	set {guild} to guild of {channel}
+	set {staffRole} to role with id "{@staffRole}" in {guild}
+	set {mutedRole} to role with id "{@mutedRole}" in {guild}
+	set {whiteIsBoring} to role with id "{@whiteIsBoring}" in {guild}
+	mark "{@bot}" as playing "on skunity.com"
+	set {_channels::*} to split "general, skunity-meta, skript-help-1, skript-help-2, skript-help-3, java-talk, other-help, resource-meta, dev-zone, famous-quotes-of-2018, poppy-talk, counting-and-memes, bot-palace" by ", "
+	loop the text channels of {guild}:
+		if "%{_channels::*}%" contains name of loop-channel:
+			set {channel::%name of loop-value%} to loop-channel
+		
+# Main function to send messages and store them to be deleted by a staff member later
+function sendMessage(content: string, channel: channel, message: message):
+	send "%{_content}% %mention tag of author of {_message}%!" to {_channel} with "{@bot}" and store it in {_msg}
+	add reaction "x" to {_msg} with "{@bot}"
+	set {{@bot}.%{_msg}%} to {_message}
+	
+# Function to tell the staff they need to include a reason
+function needReason(message: message, channel: channel):
+	send "You must include a reason to use this command" to {_channel} with "{@bot}" and store it in {_msg}
+	add reaction "x" to {_msg} with "{@bot}"
+	set {{@bot}.%{_msg}%} to {_message}
+
+
+# Custom syntax to check if a member is staff 
+member property condition staff:
+    check:
+        set {_roles::*} to roles of expr-1
+        continue if {_roles::*} contains {staffRole}
+	
+# Function to send a embed
+function sendEmbed(embed: embed builder, channel: channel, message: message):
+	set {_m} to a message builder
+	set embed of {_m} to {_embed}
+	send {_m} to {_channel} with "{@bot}" and store it in {_msg}
+	add reaction "x" to {_msg} with "{@bot}"
+	set {{@bot}.%{_msg}%} to {_message}
+
+			
+	
+# Event to remove messages if a moderator reacts with :x:
+on reaction add seen by "{@bot}":
+	if bot state of event-user is true:
+		stop
+	if event-member is staff:
+		if name of event-emote is "x":
+			if {{@bot}.%event-message%} is set:
+				delete random message out of {{@bot}.%event-message%} with "{@bot}"
+				delete event-message with "{@bot}"
+				delete {{@bot}.%event-message%}	
+
+					
+			
+
+#*{*} All commands below this point {*}*
+
+# Command to gather all current skUnity Butler commands
+discord command help [<string>]:
+	description: The help command, you may specify a specific command to get information about.
+	usage: help
+	prefixes: {@prefix}
+	executable in: guild
+	bots: {@bot}
+	trigger:
+		if arg-1 is set:
+			loop all discord commands:
+				if "%loop-value%" is arg-1:
+					set {_desc} to the description of loop-value
+					replace all "<STAFF>" with "" in {_desc}
+					create embed:
+						set author info of the embed to "Command Information"
+						add field named "Command" with value "%loop-value%" to the embed
+						add field named "Description" with value "%{_desc}%" to the embed
+						add field named "Usage" with value "{@prefix}%usage of loop-value%" to the embed
+						set color of the embed to Blue
+					sendEmbed(last created embed, event-channel, event-message)
+					stop
+		set {_m} to a message builder
+		append "Help menu %mention tag of event-channel%%nl%" to {_m}
+		append "**General**%nl%" to {_m}
+		loop all discord commands:
+			set {_desc} to loop-value.getDescription()
+			if {_desc} starts with "<STAFF>":
+				add loop-value to {_staff::*}
+			else:
+				append "`%loop-value%` - %{_desc}%%nl%" to {_m}
+		append "**Staff**%nl%" to {_m}
+		loop {_staff::*}:
+			set {_desc} to loop-value.getDescription()
+			replace all "<STAFF>" with "" in {_desc}
+			append "`%loop-value%` - %{_desc}%%nl%" to {_m}
+		append "For more information on a current command, use {@prefix}help <command>. For example, {@prefix}help %random element out of all discord commands%" to {_m}
+		send {_m} to event-user with event-bot and store it in {_var}
+		sendMessage("My help information has been sent to your dm's", event-channel, event-message)
+				
+# Command to ban users
+discord command ban <string> [<string>]:
+	description: <STAFF>Ban a member. Input can be a direct mention or a user id. Must provide a reason why
+	usage: ban <mention|user id> <reason> 
+	prefixes: {@prefix}
+	executable in: guild
+	bots: {@bot}
+	trigger:
+		if event-member is staff:
+			if arg-2 is not set:
+				needReason(event-message, event-channel)
+				stop
+			set {_mentions::*} to mentioned users of event-message
+			if {_mentions::1} is not set:
+				set {_user} to user with id arg-1
+				if {_user} is not set:
+					set {_user} to arg-1
+					ban {_user} from event-guild due to arg-2
+					set {_error} to last vixio error
+					if {_error} is set:
+						sendMessage("%{_error}%", event-channel, event-message)
+						stop
+					sendMessage("That user has been banned", event-channel, event-message)
+					set {_m} to a new message builder
+					append "**-=Ban=-**%nl%" to {_m}
+					append "**User**: %{_user}%%nl%" to {_m}
+					append "**Reason**: %arg-2%%nl%" to {_m}
+					append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
+					send {_m} to {channel} with event-bot 
+					stop
+			else:
+				set {_user} to {_mentions::1}
+			ban {_user} from event-guild due to arg-2
+			set {_error} to last vixio error
+			if {_error} is set:
+				sendMessage("%{_error}%", event-channel, event-message)
+				stop
+			sendMessage("That user has been banned", event-channel, event-message)
+			set {_m} to a new message builder
+			append "**-=Ban=-**%nl%" to {_m}
+			append "**User**: %{_user}%##%discriminator of {_user}% (%id of {_user}%)%nl%" to {_m}
+			append "**Reason**: %arg-2%%nl%" to {_m}
+			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
+			send {_m} to {channel} with event-bot 
+			
+# Command to get all of the punishments a user has had
+discord command punishments <text>:
+	description: <STAFF>Get all of the punishments a user has had.
+	usage: punishments <id|mention tag> 
+	executable in: guild
+	prefixes: {@prefix}
+	bots: {@bot}
+	trigger:
+		if event-member is staff:
+			set {_user} to arg-1 parsed as a member otherwise arg-1
+			if {Warnings::%{_user}%} is not set:
+				# todo 
+			set {_m} to a message builder
+			append "Here are all the current punishments for %{_user}%##%discriminator of {_user}% %mention tag of event-user%!%nl%" to {_m}
+			append "```" to {_m}
+			append nl to {_m}
+			if {Warnings::%{_user}%} is set:
+				loop {Warns::%{_user}%::*}:
+					append "Warned for: %loop-value%" to {_m}
+					append nl to {_m}
+			append "```" to {_m}
+			reply with {_m}
+			
+
+
+# Command to unban a user 
+discord command unban <string> [<string>]:
+	aliases: pardon
+	description: <STAFF>UnBan a user by their ID. Must provide a reason for why you unbanned them.
+	usage: unban <user id> <reason>
+	executable in: guild
+	prefixes: {@prefix}
+	bots: {@bot}
+	trigger:
+		if event-member is staff:
+			if arg-2 is not set:
+				needReason(event-message, event-channel)
+				stop			
+			retrieve the bans of event-guild
+			set {_error} to last vixio error
+			if {_error} is set:
+				sendMessage("%{_error}%", event-channel, event-message)
+				stop
+			if grabbed bans is not set:
+				sendMessage("The provided user was not banned", event-channel, event-message)
+				stop
+			loop grabbed bans:
+				if id of loop-value is arg-1:
+					unban loop-value from event-guild
+					set {_error} to last vixio error
+					if {_error} is set:
+						sendMessage("%{_error}%", event-channel, event-message)
+						stop
+					sendMessage("That user has been unbanned", event-channel, event-message)
+					set {_m} to a new message builder
+					append "**-=Pardon=-**%nl%" to {_m}
+					append "**User**: %name of loop-value%##%discriminator of loop-value%%nl%" to {_m}
+					append "**Reason**: %arg-2%%nl%" to {_m}
+					append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
+					send {_m} to {channel} with event-bot 
+					stop
+			sendMessage("The provided user was not banned", event-channel, event-message)
+			
+# Command to warn users, keeps track of warning count	
+discord command warn <member> [<string>]:
+	description: <STAFF>Warn a user, may provide a reason
+	usage: warn <mention|user id|name##discriminator> <reason>
+	executable in: guild
+	prefixes: {@prefix}
+	bots: {@bot}
+	trigger:
+		if event-member is staff:
+			if arg-2 is not set:
+				needReason(event-message, event-channel)
+				stop
+			if bot state of arg-1 is true:
+				sendMessage("You may not warn bots", event-channel, event-message)
+				stop
+			if {Warnings::%arg-1%} is not set:
+				set {Warnings::%arg-1%} to 1
+			else:
+				add 1 to {Warnings::%arg-1%}
+			send "You have received warning number %{Warnings::%arg-1%}%! You must be careful, too many warnings may lead to severe consequences. You were warned for: `%arg-2%`" to arg-1 with event-bot
+			set {_m} to a new message builder
+			set {Warns::%arg-1%::%{Warnings::%arg-1%}%} to arg-2
+			append "**-=Warning=-**%nl%" to {_m}
+			append "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)%nl%" to {_m}
+			append "**Reason**: %arg-2%%nl%" to {_m}
+			append "**Count**: %{Warnings::%arg-1%}%%nl%" to {_m}
+			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
+			send {_m} to {channel} with event-bot 
+			sendMessage("I have issued a warning to %arg-1%##%discriminator of arg-1%", event-channel, event-message)
+			
+# Command to get warnings for a user 
+discord command warnings <string> [<number>]:
+	description: <STAFF>Get either all the warnings of a user or a specific warning number from a user
+	executable in: guild 
+	usage: warnings <mention|user id|name##discriminator> [<warning number>]
+	prefixes: {@prefix}
+	bots: {@bot}
+	trigger:
+		if event-member is staff:
+			set {_mentions::*} to mentioned users of event-message
+			if {_mentions::1} is not set:
+				if {Warnings::%arg-1%} is not set:
+					sendMessage("The user with the provided ID has no warnings", event-channel, event-message)
+					stop
+				if arg-2 is not set:
+					set {_m} to a message builder
+					append "Here are the current warnings for user with the id %arg-1%%nl%" to {_m}
+					append "```vbs%nl%" to {_m}
+					set {_count} to 0
+					loop {Warns::%arg-1%::*}:
+						add 1 to {_count}
+						append "%{_count}%) %loop-value%%nl%" to {_m}
+					append "```" to {_m}
+					send {_m} to event-channel with "{@bot}" and store it in {_msg}
+					add reaction "x" to {_msg} with "{@bot}"
+					set {{@bot}.%{_msg}%} to {_message}
+					stop
+				else:
+					if {Warns::%arg-1%::%arg-2%} is not set:
+						sendMessage("That user does not have a warning attached to that number", event-channel, event-message)
+						stop
+					sendMessage("That user was warned for `%{Warns::%arg-1%::%arg-2%}%`", event-channel, event-message)
+				
+			else:
+				set {_user} to {_mentions::1}
+				if {Warnings::%{_mentions::1}%} is not set:
+					sendMessage("That user currently has no warnings", event-channel, event-message)
+					stop
+				if arg-2 is not set:
+					set {_m} to a message builder
+					append "Here are the current warnings for %{_user}%##%discriminator of {_user}%%nl%" to {_m}
+					append "```vbs%nl%" to {_m}
+					set {_count} to 0
+					loop {Warns::%{_user}%::*}:
+						add 1 to {_count}
+						append "%{_count}%) %loop-value%%nl%" to {_m}
+					append "```" to {_m}
+					send {_m} to event-channel with "{@bot}" and store it in {_msg}
+					add reaction "x" to {_msg} with "{@bot}"
+					set {{@bot}.%{_msg}%} to {_message}
+					stop
+				else:
+					if {Warns::%{_mentions::1}%::%arg-2%} is not set:
+						sendMessage("That user does not have a warning attached to that number", event-channel, event-message)
+						stop
+					sendMessage("That user was warned for `%{Warns::%{_mentions::1}%::%arg-2%}%`", event-channel, event-message)
+				
+				
+
+# Command to mute users, may provide a reason	
+discord command mute <member> [<string>]:
+	description: <STAFF>Mute a user, must provide a reason
+	executable in: guild
+	usage: mute <mention|user id|name##discriminator> <reason>
+	prefixes: {@prefix}
+	bots: {@bot}
+	trigger:
+		if event-member is staff:
+			if arg-2 is not set:
+				needReason(event-message, event-channel)
+				stop
+			set {_roles::*} to roles of arg-1
+			if {_roles::*} contains {mutedRole}:
+				sendMessage("%arg-1%##%discriminator of arg-1% is already muted", event-channel, event-message)
+				stop
+			add {mutedRole} to roles of arg-1 with "{@bot}"
+			set {_error} to last vixio error
+			if {_error} is set:
+				sendMessage("%{_error}%", event-channel, event-message)
+				stop
+			set {evaders::%arg-1%} to true
+			sendMessage("%name of arg-1%##%discriminator of arg-1% has been muted", event-channel, event-message)
+			set {_m} to a new message builder
+			append "**-=Mute=-**%nl%" to {_m}
+			append "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)%nl%" to {_m}
+			append "**Reason**: %arg-2%%nl%" to {_m}
+			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
+			send {_m} to {channel} with event-bot 
+	
+# Command to un-mute users
+discord command unmute <member> [<string>]:
+	description: <STAFF>Un-mute a user, must provide a reason
+	executable in: guild 
+	usage: unmute <mention|user id||name##discriminator> <reason>
+	prefixes: {@prefix}
+	bots: {@bot}
+	trigger:
+		if event-member is staff:
+			if arg-2 is not set:
+				needReason(event-message, event-channel)
+				stop
+			set {_roles::*} to roles of arg-1
+			if {_roles::*} does not contain {mutedRole}:
+				sendMessage("That user is not currently muted", event-channel, event-message)
+				stop
+			remove {mutedRole} from roles of arg-1 with event-bot
+			set {_error} to last vixio error 
+			if {_error} is set:
+				sendMessage("I ran into an error! `%{_error}%`", event-channel, event-message)
+				stop
+			if {tempMute::%arg-1%} is true:
+				delete {tempMute::%arg-1%}
+				delete {tempMute::%arg-1%::time}
+				delete {tempMute::%arg-1%::length}
+			sendMessage("%arg-1%##%discriminator of arg-1% has been un-muted", event-channel, event-message)
+			set {evaders::%arg-1%} to false
+			set {_m} to a new message builder
+			append "**-=Un-Mute=-**%nl%" to {_m}
+			append "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)%nl%" to {_m}
+			append "**Reason**: %arg-2%%nl%" to {_m}
+			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
+			send {_m} to {channel} with event-bot 
+			
+# Command to kick users, may provide a reason 
+discord command kick <member> [<string>]:
+	description: <STAFF>kick a user, must provide a reason
+	usage: kick <mention|user id|name##discriminator> <reason>
+	executable in: guild
+	prefixes: {@prefix}
+	bots: {@bot}
+	trigger:
+		if event-member is staff:
+			if arg-2 is not set:
+				needReason(event-message, event-channel)
+				stop
+			kick arg-1 from event-guild due to arg-2 with event-bot
+			set {_error} to last vixio error
+			if {_error} is set:
+				sendMessage("%{_error}%", event-channel, event-message)
+				stop
+			sendMessage("I have successfully kicked %arg-1%##%discriminator of arg-1% from the server", event-channel, event-message)
+			set {_m} to a new message builder
+			append "**-=Kick=-**%nl%" to {_m}
+			append "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)%nl%" to {_m}
+			append "**Reason**: %arg-2%%nl%" to {_m}
+			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
+			send {_m} to {channel} with event-bot 
+	
+# Command to purge messages 
+discord command purge <number>:
+	description: <STAFF>Remove a number of messages, the executing message is not included in the count.
+	usage: purge <number>
+	prefixes: {@prefix}
+	executable in: guild
+	bots: {@bot}
+	trigger:
+		if event-member is staff:
+			set {_num} to arg-1 + 1
+			grab the last {_num} messages in event-channel
+			set {_messages::*} to grabbed messages
+			delete {_messages::1}
+			purge {_messages::*} with event-bot
+			set {_error} to last vixio error 
+			if {_error} is set:
+				sendMessage("I ran into an error! `%{_error}%`", event-channel, event-message)
+				stop
+			sendMessage("I have successfully purged %arg-1% messages", event-channel, event-message)
+			set {_m} to a new message builder
+			append "**-=Purge=-**%nl%" to {_m}
+			append "**Channel**: %mention tag of event-channel%%nl%" to {_m}
+			append "**Amount of Messages**: %arg-1%%nl%" to {_m}
+			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
+			send {_m} to {channel} with event-bot 
+			
+			
+# Command to temporarily mute something 
+discord command tempmute <member> [<string>] <timespan>:
+	description: <STAFF>Temporarily mute a user by ID or by a direct mention, must include a timespan and a reason.
+	usage: tempmute <user id|direct mention|name##discriminator> <reason> <timespan>
+	prefixes: {@prefix}
+	executable in: guild 
+	bots: {@bot}
+	trigger:
+		if event-member is staff:
+			if arg-2 is not set:
+				needReason(event-message, event-channel)
+				stop
+			set {_roles::*} to roles of arg-1
+			if {_roles::*} contains {mutedRole}:
+				sendMessage("That user is already muted", event-channel, event-message)
+				stop
+			add {mutedRole} to roles of arg-1 with "{@bot}"
+			set {_error} to last vixio error 
+			if {_error} is set:
+				sendMessage("I ran into an error! `%{_error}%`", event-channel, event-message)
+				stop
+			set {tempMute::%arg-1%} to arg-1
+			set {tempMute::%arg-1%::length} to arg-3
+			set {tempMute::%arg-1%::time} to now
+			set {evaders::%arg-1%} to true
+			sendMessage("I have successfully muted %arg-1%##%discriminator of arg-1% for %arg-3%", event-channel, event-message)
+			set {_m} to a new message builder
+			append "**-=Temp-Mute=-**%nl%" to {_m}
+			append "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)%nl%" to {_m}
+			append "**Reason**: %arg-2%%nl%" to {_m}
+			append "**Amount of time**: %arg-3%%nl%" to {_m}
+			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
+			send {_m} to {channel} with event-bot 
+						
+# Event to un-mute people who are temp-muted
+every second:
+	loop {tempMute::*}:
+		set {_length} to {tempMute::%loop-index%::length}
+		set {_time} to {tempMute::%loop-index%::time}
+		set {_difference} to "%difference between {_time} and now%"
+		if difference between {tempMute::%loop-index%::time} and now is more than {tempMute::%loop-index%::length}:
+			remove {mutedRole} from roles of {tempMute::%loop-index%} in guild of {channel} with "{@bot}"
+			delete {tempMute::%loop-index%}
+			delete {tempMute::%loop-index%::*}
+			delete {evaders::%loop-index%::*}
+	loop discord members of {guild}:
+		delete {_roles::*}
+		if bot state of loop-member is false:
+			set {_roles::*} to roles of loop-member
+			if {_roles::*} is not set:
+				add 1 to {_count}
+				add {whiteIsBoring} to roles of loop-member with "{@bot}"
+			else if {_roles::*} does not contain {whiteIsBoring}:
+				add 1 to {_count}
+				add {whiteIsBoring} to roles of loop-member with "{@bot}"
+			
+		
+# Command to reload the skript
+discord command reload:
+	prefixes: {@prefix}
+	usage: reload
+	description: <STAFF>Reload's the skript
+	bots: {@bot}
+	trigger:
+		if event-member is staff:
+			clear {errors::*}
+			evaluate logging errors in {errors::*}: "execute console command ""skript reload %script%"""
+			if {errors::*} is set:
+				sendMessage("I ran into %size of {errors::*}% errors, the first one is `%{errors::1}%`", event-channel, event-message)
+				stop
+			sendMessage("I have successfully reloaded the skript", event-channel, event-message)
+
+discord command addall:
+	prefixes: {@prefix}
+	usage: addall 
+	description: <STAFF>Add the White Is Boring role to everyone who doesn't have it
+	bots: {@bot}
+	trigger:
+		if event-member is staff:
+			set {_count} to 0
+			loop discord members of event-guild:
+				delete {_roles::*}
+				set {_member} to loop-member
+				if bot state of {_member} is false:
+					set {_roles::*} to roles of {_member}
+					if {_roles::*} is not set:
+						add 1 to {_count}
+						add {whiteIsBoring} to roles of {_member} with event-bot
+					else if {_roles::*} does not contain {whiteIsBoring}:
+						add 1 to {_count}
+						add {whiteIsBoring} to roles of {_member} with event-bot
+			sendMessage("%{_count}% people have received the white is boring role", event-channel, event-message)
+			
+# Evaluate script code through the bot, empty trigger for documentation purposes
+discord command eval <string>:
+	prefixes: {@prefix}
+	usage: eval <string>
+	description: <STAFF>Evaluate skript code
+	bots: {@bot}
+	trigger:
+		if event-member is staff:
+			send typing in event-channel
+			set {_msg} to arg-1
+			if {_msg} contains "```":
+				replace all "```" with "" in {_msg}
+				sendMessage("Attempting to evaluate that for you", event-channel, event-message)
+			else:
+				sendMessage("Attempting to evaluate `%{_msg}%` for you", event-channel, event-message)
+			evaluate logging errors in {errors::*}: {_msg}
+			if {errors::*} is set:
+				sendMessage("Ran into a error! `%{errors::*}%`", event-channel, event-message)
+				clear {errors::*}
+				stop
+
+#*{*} MISC COMMANDS {*}*			
+				
+# Get a bunch of information about a user
+discord command user [<member>]:
+	description: Get a ton of information about a user.
+	prefixes: {@prefix}
+	executable in: guild
+	usage: user [<mention|user id|name##discriminator>]
+	bots: {@bot}
+	trigger:
+		if arg-1 is not set:
+			set {_user} to event-user
+		else:
+			set {_user} to arg-1
+		create embed:
+			set {_guildDate::*} to split "%join date of {_user} in event-guild%" at " "
+			set {_discordDate::*} to split "%discord join date of {_user}%" at " "
+			set {_bot} to bot state of {_user}
+			if game of {_user} is set:
+				set {_game} to game of {_user}
+			else:
+				set {_game} to "NONE"
+			set the author info of the embed to author named "Who is %name of {_user}%" with no url and no icon 
+			set the thumbnail of embed to "%avatar of {_user}%"
+			set {_m} to a message builder
+			append "Name: **%name of {_user}%##%discriminator of {_user}%**%nl%" to {_m}
+			append "ID: **%id of {_user}%**%nl%" to {_m}
+			append "Joined Discord: **%{_discordDate::1}%**%nl%" to {_m}
+			append nl to {_m}
+			append "__**General**__:%nl%" to {_m}
+			set {_status} to status of {_user}
+			append "Status: **%{_status}.toString().toUpperCase()%**%nl%" to {_m}
+			append "Nick: **%nickname of {_user} in event-guild%**%nl%" to {_m}
+			append "Game: **%{_game}%**%nl%" to {_m}
+			append "Bot: **%{_bot}.toString().toUpperCase()%**%nl%" to {_m}
+			append "Joined Guild: **%{_guildDate::1}%**%nl%" to {_m}
+			set the description of the embed to "%{_m}%"
+		sendEmbed(last created embed, event-channel, event-message)
+		
+					
+# Event to give the white is boring role when someone joins. Also re-adds muted role if they are avoiding it
+on member join guild seen by "{@bot}":
+	if {evaders::%event-user%} is set:
+		if {evaders::%event-user%} is true:
+			wait 3 seconds
+			add {mutedRole} to roles of event-member with event-bot
+	wait 3 seconds
+	add {whiteIsBoring} to roles of event-member with event-bot
+			
+# Event to stop muted people from speaking if they are trying to mute evade
+on guild message received seen by "{@bot}":
+	if {evaders::%event-user%} is true:
+		delete event-message with event-bot
+		add {mutedRole} to roles of event-member with event-bot
+
+discord command !log:
+	trigger:
+		set {_channels::*} to split "general, skunity-meta, skript-help-1, skript-help-2, skript-help-3, java-talk, other-help, resource-meta, dev-zone, famous-quotes-of-2018, poppy-talk, counting-and-memes, bot-palace" by ", "
+		loop {_channels::*}:
+			create text-channel named loop-value
+
+on guild message received:
+	if id of event-guild is not "475328670693589002":
+		if {channel::%name of event-channel%} is set:
+			set {_} to a message builder
+			append "```%nl%" to {_m}
+			
+			send "%event-user%##%discriminator of event-user%(%id of event-user%) said `%event-string%`" to {channel::%name of event-channel%} with event-bot
