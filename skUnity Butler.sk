@@ -50,7 +50,9 @@ function sendEmbed(embed: embed builder, channel: channel, message: message):
 	add reaction "x" to {_msg} with "{@bot}"
 	set {{@bot}.%{_msg}%} to {_message}
 
-			
+function sendLog(builder: message):
+	send {_builder} to {channel} with "{@bot}" and store it in {_msg}
+	add reaction "regional_indicator_symbol_r" to {_msg} with "{@bot}"
 	
 # Event to remove messages if a moderator reacts with :x:
 on reaction add seen by "{@bot}":
@@ -62,9 +64,34 @@ on reaction add seen by "{@bot}":
 				delete random message out of {{@bot}.%event-message%} with "{@bot}"
 				delete event-message with "{@bot}"
 				delete {{@bot}.%event-message%}	
-
-					
 			
+# Event to make modifying the reason for punishment possible
+on reaction add seen by "{@bot}":
+	if bot state of event-user is true:
+		stop
+	if the id of event-channel is the id of {channel}:
+		if event-member is staff:
+			if the name of event-emote is "regional_indicator_symbol_r":
+				remove event-emote added by event-user from event-message
+				set {reason::%event-user%} to event-message
+				send "You've requested to modify the reason of a message in the staff log channel, if this was by accident, reply with `cancel`. Otherwise, reply with the new reason." to event-user with event-bot
+					
+on direct message received:
+	if {reason::%event-user%} is set:
+		if content of event-message is "cancel":
+			reply with "You've successfully canceled your request."
+			delete {reason::%event-user%}
+			stop
+		set {_m} to a message builder
+		loop split content of {reason::%event-user%} at "%nl%":
+			if loop-value contains "Reason":
+				append "**Reason**: %content of event-message%%nl%" to {_m}
+			else:
+				append "%loop-value%%nl%" to {_m}
+		edit {reason::%event-user%} to show {_m}
+		#TODO, MODIFY THE REASONS FOR ALL THE PUNISHMENTS
+		delete {reason::%event-user%}
+		reply with "You have successfully successfully updated the reason to be `%content of event-message%`"
 
 #*{*} All commands below this point {*}*
 
@@ -120,7 +147,7 @@ discord command ban <string> [<string>] [<number>]:
 				needReason(event-message, event-channel)
 				stop
 			if arg-1 parsed as member is not set:
-				retrieve user with id "%arg-1%" and store them in {_user}
+				retrieve user with id arg-1 and store them in {_user}
 				if {_user} is not set:
 					sendMessage("That user could not be parsed", event-channel, event-message)
 					stop
@@ -140,7 +167,7 @@ discord command ban <string> [<string>] [<number>]:
 			append "**User**: %{_user}%##%discriminator of {_user}% (%id of {_user}%)%nl%" to {_m}
 			append "**Reason**: %arg-2%%nl%" to {_m}
 			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
-			send {_m} to {channel} with event-bot
+			sendLog({_m})
 			
 			
 			
@@ -203,7 +230,7 @@ discord command unban <string> [<string>]:
 					append "**User**: %name of loop-value%##%discriminator of loop-value%%nl%" to {_m}
 					append "**Reason**: %arg-2%%nl%" to {_m}
 					append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
-					send {_m} to {channel} with event-bot 
+					sendLog({_m})
 					stop
 			sendMessage("The provided user was not banned", event-channel, event-message)
 			
@@ -234,7 +261,7 @@ discord command warn <member> [<string>]:
 			append "**Reason**: %arg-2%%nl%" to {_m}
 			append "**Count**: %{Warnings::%arg-1%}%%nl%" to {_m}
 			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
-			send {_m} to {channel} with event-bot 
+			sendLog({_m})
 			sendMessage("I have issued a warning to %arg-1%##%discriminator of arg-1%", event-channel, event-message)
 			
 # Command to get warnings for a user 
@@ -247,7 +274,7 @@ discord command warnings <string> [<number>]:
 	trigger:
 		if event-member is staff:
 			if arg-1 parsed as member is not set:
-				retrieve user with id "%arg-1%" and store them in {_user}
+				retrieve user with id arg-1 and store them in {_user}
 				if {_user} is not set:
 					sendMessage("That user could not be parsed", event-channel, event-message)
 					stop
@@ -302,7 +329,7 @@ discord command mute <member> [<string>]:
 			append "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)%nl%" to {_m}
 			append "**Reason**: %arg-2%%nl%" to {_m}
 			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
-			send {_m} to {channel} with event-bot 
+			sendLog({_m})
 	
 # Command to un-mute users
 discord command unmute <member> [<string>]:
@@ -336,7 +363,7 @@ discord command unmute <member> [<string>]:
 			append "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)%nl%" to {_m}
 			append "**Reason**: %arg-2%%nl%" to {_m}
 			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
-			send {_m} to {channel} with event-bot 
+			sendLog({_m})			
 			
 # Command to kick users, may provide a reason 
 discord command kick <member> [<string>]:
@@ -361,7 +388,7 @@ discord command kick <member> [<string>]:
 			append "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)%nl%" to {_m}
 			append "**Reason**: %arg-2%%nl%" to {_m}
 			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
-			send {_m} to {channel} with event-bot 
+			sendLog({_m})
 	
 # Command to purge messages 
 discord command purge <number>:
@@ -422,7 +449,7 @@ discord command tempmute <member> [<string>] <timespan>:
 			append "**Reason**: %arg-2%%nl%" to {_m}
 			append "**Amount of time**: %arg-3%%nl%" to {_m}
 			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
-			send {_m} to {channel} with event-bot 
+			sendLog({_m})
 						
 # Event to un-mute people who are temp-muted
 every second:
