@@ -83,14 +83,29 @@ on direct message received:
 			delete {reason::%event-user%}
 			stop
 		set {_m} to a message builder
+		set {_count} to 0
 		loop split content of {reason::%event-user%} at "%nl%":
+			add 1 to {_count}
+			if {_count} is 1:
+				set {_type} to loop-value
+			if loop-value contains "User":
+				set {_user} to loop-value
+			if loop-value contains "Count":
+				set {_count} to loop-value
 			if loop-value contains "Reason":
 				append "**Reason**: %content of event-message%%nl%" to {_m}
 			else:
 				append "%loop-value%%nl%" to {_m}
 		edit {reason::%event-user%} to show {_m}
-		#TODO, MODIFY THE REASONS FOR ALL THE PUNISHMENTS
 		delete {reason::%event-user%}
+		set {_user::*} to {_user} split at " "
+		set {_id} to {_user::3}
+		replace all "(" with "" in {_id}
+		replace all ")" with "" in {_id}
+		if {_type} contains "Warning":
+			set {_count::*} to {_count} split at " "
+			set {Warns::%{_id}%::%{_count::2}%} to content of event-message
+			
 		reply with "You have successfully successfully updated the reason to be `%content of event-message%`"
 
 #*{*} All commands below this point {*}*
