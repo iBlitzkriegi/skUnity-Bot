@@ -94,7 +94,7 @@ discord command help [<string>]:
 		append "**General**%nl%" to {_m}
 		loop all discord commands:
 			set {_desc} to loop-value.getDescription()
-			if {_desc} starts with "<STAFF>":
+			if {_desc} contains "<STAFF>":
 				add loop-value to {_staff::*}
 			else:
 				append "`%loop-value%` - %{_desc}%%nl%" to {_m}
@@ -588,12 +588,6 @@ on guild message received seen by "{@bot}":
 	if {evaders::%event-user%} is true:
 		delete event-message with event-bot
 		add {mutedRole} to roles of event-member with event-bot
-
-discord command !log:
-	trigger:
-		set {_channels::*} to split "general, skunity-meta, skript-help-1, skript-help-2, skript-help-3, java-talk, other-help, resource-meta, dev-zone, famous-quotes-of-2018, poppy-talk, counting-and-memes, bot-palace" by ", "
-		loop {_channels::*}:
-			create text-channel named loop-value
 
 on guild message received:
 	if id of event-guild is not "475328670693589002":
