@@ -106,11 +106,11 @@ discord command help [<string>]:
 		append "For more information on a current command, use {@prefix}help <command>. For example, {@prefix}help %random element out of all discord commands%" to {_m}
 		send {_m} to event-user with event-bot and store it in {_var}
 		sendMessage("My help information has been sent to your dm's", event-channel, event-message)
-				
+
 # Command to ban users
-discord command ban <string> [<string>]:
-	description: <STAFF>Ban a member. Input can be a direct mention or a user id. Must provide a reason why
-	usage: ban <mention|user id> <reason> 
+discord command ban <string> [<string>] [<number>]:
+	description: <STAFF>Ban a member. Input can be a direct mention, user id, or name##discrim. Must provide a reason. The last argument is the amount of days worth of messages to clear.
+	usage: ban <user> <reason> [<days of messages to prune>]
 	prefixes: {@prefix}
 	executable in: guild
 	bots: {@bot}
@@ -119,38 +119,32 @@ discord command ban <string> [<string>]:
 			if arg-2 is not set:
 				needReason(event-message, event-channel)
 				stop
-			set {_mentions::*} to mentioned users of event-message
-			if {_mentions::1} is not set:
-				set {_user} to user with id arg-1
+			if arg-1 parsed as member is not set:
+				retrieve user with id "%arg-1%" and store them in {_user}
 				if {_user} is not set:
-					set {_user} to arg-1
-					ban {_user} from event-guild due to arg-2
-					set {_error} to last vixio error
-					if {_error} is set:
-						sendMessage("%{_error}%", event-channel, event-message)
-						stop
-					sendMessage("That user has been banned", event-channel, event-message)
-					set {_m} to a new message builder
-					append "**-=Ban=-**%nl%" to {_m}
-					append "**User**: %{_user}%%nl%" to {_m}
-					append "**Reason**: %arg-2%%nl%" to {_m}
-					append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
-					send {_m} to {channel} with event-bot 
 					stop
 			else:
-				set {_user} to {_mentions::1}
-			ban {_user} from event-guild due to arg-2
+				set {_user} to arg-1 parsed as a member
+			if {_user} is not set:
+				sendMessage("That user could not be parsed", event-channel, event-message)
+				stop
+			if arg-3 is not set:
+				ban {_user} from event-guild due to arg-2
+			else:
+				ban {_user} from event-guild due to arg-2 and delete arg-3 days of messages
 			set {_error} to last vixio error
 			if {_error} is set:
 				sendMessage("%{_error}%", event-channel, event-message)
 				stop
-			sendMessage("That user has been banned", event-channel, event-message)
+			sendMessage("%{_user}%##%discriminator of {_user}% has been banned", event-channel, event-message)
 			set {_m} to a new message builder
 			append "**-=Ban=-**%nl%" to {_m}
 			append "**User**: %{_user}%##%discriminator of {_user}% (%id of {_user}%)%nl%" to {_m}
 			append "**Reason**: %arg-2%%nl%" to {_m}
 			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
-			send {_m} to {channel} with event-bot 
+			send {_m} to {channel} with event-bot
+			
+			
 			
 # Command to get all of the punishments a user has had
 discord command punishments <text>:
