@@ -122,12 +122,10 @@ discord command ban <string> [<string>] [<number>]:
 			if arg-1 parsed as member is not set:
 				retrieve user with id "%arg-1%" and store them in {_user}
 				if {_user} is not set:
+					sendMessage("That user could not be parsed", event-channel, event-message)
 					stop
 			else:
 				set {_user} to arg-1 parsed as a member
-			if {_user} is not set:
-				sendMessage("That user could not be parsed", event-channel, event-message)
-				stop
 			if arg-3 is not set:
 				ban {_user} from event-guild due to arg-2
 			else:
@@ -248,54 +246,32 @@ discord command warnings <string> [<number>]:
 	bots: {@bot}
 	trigger:
 		if event-member is staff:
-			set {_mentions::*} to mentioned users of event-message
-			if {_mentions::1} is not set:
-				if {Warnings::%arg-1%} is not set:
-					sendMessage("The user with the provided ID has no warnings", event-channel, event-message)
+			if arg-1 parsed as member is not set:
+				retrieve user with id "%arg-1%" and store them in {_user}
+				if {_user} is not set:
+					sendMessage("That user could not be parsed", event-channel, event-message)
 					stop
-				if arg-2 is not set:
-					set {_m} to a message builder
-					append "Here are the current warnings for user with the id %arg-1%%nl%" to {_m}
-					append "```vbs%nl%" to {_m}
-					set {_count} to 0
-					loop {Warns::%arg-1%::*}:
-						add 1 to {_count}
-						append "%{_count}%) %loop-value%%nl%" to {_m}
-					append "```" to {_m}
-					send {_m} to event-channel with "{@bot}" and store it in {_msg}
-					add reaction "x" to {_msg} with "{@bot}"
-					set {{@bot}.%{_msg}%} to {_message}
-					stop
-				else:
-					if {Warns::%arg-1%::%arg-2%} is not set:
-						sendMessage("That user does not have a warning attached to that number", event-channel, event-message)
-						stop
-					sendMessage("That user was warned for `%{Warns::%arg-1%::%arg-2%}%`", event-channel, event-message)
-				
 			else:
-				set {_user} to {_mentions::1}
-				if {Warnings::%{_mentions::1}%} is not set:
-					sendMessage("That user currently has no warnings", event-channel, event-message)
+				set {_user} to arg-1 parsed as a member
+			if {Warnings::%{_user}%} is not set:
+				sendMessage("%{_user}%##%discriminator of {_user}% currently has no warnings", event-channel, event-message)
+				stop
+			if arg-2 is set:
+				if {Warns::%{_user}%::%arg-2%} is not set:
+					sendMessage("That user does not have a warning attached to that number", event-channel, event-message)
 					stop
-				if arg-2 is not set:
-					set {_m} to a message builder
-					append "Here are the current warnings for %{_user}%##%discriminator of {_user}%%nl%" to {_m}
-					append "```vbs%nl%" to {_m}
-					set {_count} to 0
-					loop {Warns::%{_user}%::*}:
-						add 1 to {_count}
-						append "%{_count}%) %loop-value%%nl%" to {_m}
-					append "```" to {_m}
-					send {_m} to event-channel with "{@bot}" and store it in {_msg}
-					add reaction "x" to {_msg} with "{@bot}"
-					set {{@bot}.%{_msg}%} to {_message}
-					stop
-				else:
-					if {Warns::%{_mentions::1}%::%arg-2%} is not set:
-						sendMessage("That user does not have a warning attached to that number", event-channel, event-message)
-						stop
-					sendMessage("That user was warned for `%{Warns::%{_mentions::1}%::%arg-2%}%`", event-channel, event-message)
-				
+				sendMessage("That user was warned for `%{Warns::%{_user}%::%arg-2%}%`", event-channel, event-message)
+				stop
+			set {_m} to a message builder
+			append "```vbs%nl%" to {_m}
+			set {_count} to 0
+			loop {Warns::%{_user}%::*}:
+				add 1 to {_count}
+				append "%{_count}%) %loop-value%%nl%" to {_m}
+			append "```" to {_m}
+			send {_m} to event-channel with "{@bot}" and store it in {_msg}
+			add reaction "x" to {_msg} with "{@bot}"
+			set {{@bot}.%{_msg}%} to {_message}
 				
 
 # Command to mute users, may provide a reason	
