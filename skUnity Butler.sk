@@ -10,7 +10,7 @@ options:
 on skript load:
 	load yaml "plugins/Skript/scripts/config.yml" as "config"
 	set {_token} to yaml value "token" from "config"
-	login to "%{_token}%" with the name "{@bot}"
+	login to {_token} with the name "{@bot}"
 	wait 5 seconds
 	set {channel} to channel with id "{@logChannel}"
 	set {guild} to guild of {channel}
