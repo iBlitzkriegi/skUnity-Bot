@@ -93,6 +93,7 @@ on direct message received:
 			if loop-value contains "Count":
 				set {_count} to loop-value
 			if loop-value contains "Reason":
+				set {_reason} to loop-value
 				append "**Reason**: %content of event-message%%nl%" to {_m}
 			else:
 				append "%loop-value%%nl%" to {_m}
@@ -102,10 +103,16 @@ on direct message received:
 		set {_id} to {_user::3}
 		replace all "(" with "" in {_id}
 		replace all ")" with "" in {_id}
+		set {_reasons::*} to {_reason} split at " "
+		set {_realReason} to {_reasons::2}
 		if {_type} contains "Warning":
 			set {_count::*} to {_count} split at " "
 			set {Warns::%{_id}%::%{_count::2}%} to content of event-message
-			
+		else if {_type} contains "Mute":
+			loop {Mutes::%{_id}%} times:
+				set {_setReason} to {Mutes::%{_id}%::%loop-value%}
+				if "%{_setReason}%" contains "%{_realReason}%":
+					set {Mutes::%{_id}%::%loop-value%} to content of event-message
 		reply with "You have successfully successfully updated the reason to be `%content of event-message%`"
 
 #*{*} All commands below this point {*}*
@@ -196,8 +203,14 @@ discord command punishments <text>:
 	trigger:
 		if event-member is staff:
 			set {_user} to arg-1 parsed as a member otherwise arg-1
-			if {Warnings::%{_user}%} is not set:
-				# todo 
+			set {_punished} to false
+			if {Warns::%{_user}%} is set:
+				set {_punished} to true
+			if {Mutes::%{_user}%} is set:
+				set {_punished} to true
+			if {_punished} is false:
+				sendMessage("%{_user}%##%discriminator of {_user}% has never been punished.", event-channel, event-message)
+				stop
 			set {_m} to a message builder
 			append "Here are all the current punishments for %{_user}%##%discriminator of {_user}% %mention tag of event-user%!%nl%" to {_m}
 			append "```" to {_m}
@@ -205,6 +218,10 @@ discord command punishments <text>:
 			if {Warnings::%{_user}%} is set:
 				loop {Warns::%{_user}%::*}:
 					append "Warned for: %loop-value%" to {_m}
+					append nl to {_m}
+			if {Mutes::%{_user}%} is set:
+				loop {Mutes::%{_user}%::*}:
+					append "Muted for: %loop-value%" to {_m}
 					append nl to {_m}
 			append "```" to {_m}
 			reply with {_m}
@@ -338,6 +355,11 @@ discord command mute <member> [<string>]:
 				sendMessage("%{_error}%", event-channel, event-message)
 				stop
 			set {evaders::%arg-1%} to true
+			if {Mutes::%arg-1%} is not set:
+				set {Mutes::%arg-1%} to 1
+			else:
+				add 1 to {Mutes::%arg-1%}
+			set {Mutes::%arg-1%::%{Mutes::%arg-1%}%} to arg-2
 			sendMessage("%name of arg-1%##%discriminator of arg-1% has been muted", event-channel, event-message)
 			set {_m} to a new message builder
 			append "**-=Mute=-**%nl%" to {_m}
@@ -454,6 +476,7 @@ discord command tempmute <member> [<string>] <timespan>:
 				sendMessage("I ran into an error! `%{_error}%`", event-channel, event-message)
 				stop
 			set {tempMute::%arg-1%} to arg-1
+			set {tempMute::%arg-1%::reason} to arg-2
 			set {tempMute::%arg-1%::length} to arg-3
 			set {tempMute::%arg-1%::time} to now
 			set {evaders::%arg-1%} to true
