@@ -208,6 +208,8 @@ discord command punishments <text>:
 				set {_punished} to true
 			if {Mutes::%{_user}%} is set:
 				set {_punished} to true
+			if {punishment::tempmute::%{_user}%} is set:
+				set {_punished} to true
 			if {_punished} is false:
 				sendMessage("%{_user}%##%discriminator of {_user}% has never been punished.", event-channel, event-message)
 				stop
@@ -222,6 +224,10 @@ discord command punishments <text>:
 			if {Mutes::%{_user}%} is set:
 				loop {Mutes::%{_user}%::*}:
 					append "Muted for: %loop-value%" to {_m}
+					append nl to {_m}
+			if {punishment::tempmute::%{_user}%::count} is set:
+				loop {punishment::tempmute::%{_user}%::count} times:
+					append "Temp-muted (%{punishment::tempmute::%{_user}%::%loop-value%::length}%): %{punishment::tempmute::%{_user}%::%loop-value%::reason}%" to {_m}
 					append nl to {_m}
 			append "```" to {_m}
 			reply with {_m}
@@ -393,6 +399,7 @@ discord command unmute <member> [<string>]:
 				delete {tempMute::%arg-1%}
 				delete {tempMute::%arg-1%::time}
 				delete {tempMute::%arg-1%::length}
+				delete {tempMute::%arg-1%::*}
 			sendMessage("%arg-1%##%discriminator of arg-1% has been un-muted", event-channel, event-message)
 			set {evaders::%arg-1%} to false
 			set {_m} to a new message builder
@@ -475,8 +482,14 @@ discord command tempmute <member> [<string>] <timespan>:
 			if {_error} is set:
 				sendMessage("I ran into an error! `%{_error}%`", event-channel, event-message)
 				stop
+			if {punishment::tempmute::%arg-1%::count} is not set:
+				set {punishment::tempmute::%arg-1%::count} to 1
+			else:
+				add 1 to {punishment::tempmute::%arg-1%::count}
+			set {_count} to {punishment::tempmute::%arg-1%::count}
+			set {punishment::tempmute::%arg-1%::%{_count}%::reason} to arg-2
+			set {punishment::tempmute::%arg-1%::%{_count}%::length} to arg-3
 			set {tempMute::%arg-1%} to arg-1
-			set {tempMute::%arg-1%::reason} to arg-2
 			set {tempMute::%arg-1%::length} to arg-3
 			set {tempMute::%arg-1%::time} to now
 			set {evaders::%arg-1%} to true
@@ -492,14 +505,17 @@ discord command tempmute <member> [<string>] <timespan>:
 # Event to un-mute people who are temp-muted
 every second:
 	loop {tempMute::*}:
+		broadcast "%{tempMute::%loop-index%}%"
 		set {_length} to {tempMute::%loop-index%::length}
+		broadcast "%{_length}%"
 		set {_time} to {tempMute::%loop-index%::time}
 		set {_difference} to "%difference between {_time} and now%"
 		if difference between {tempMute::%loop-index%::time} and now is more than {tempMute::%loop-index%::length}:
+			broadcast "past"
 			remove {mutedRole} from roles of {tempMute::%loop-index%} in guild of {channel} with "{@bot}"
-			delete {tempMute::%loop-index%}
 			delete {tempMute::%loop-index%::*}
-			delete {evaders::%loop-index%::*}
+			delete {tempMute::%loop-index%}
+			delete {evaders::%loop-index%}
 	loop discord members of {guild}:
 		delete {_roles::*}
 		if bot state of loop-member is false:
