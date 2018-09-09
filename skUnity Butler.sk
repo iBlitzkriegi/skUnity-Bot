@@ -114,11 +114,15 @@ on direct message received:
 				set {_setReason} to {Mutes::%{_id}%::%loop-value%}
 				if "%{_setReason}%" contains "%{_realReason}%":
 					set {Mutes::%{_id}%::%loop-value%} to content of event-message
-		else if "%{_type}%" contains "Temp":
+		else if {_type} contains "Temp":
 			loop {punishment::tempmute::%{_id}%::count} times:
 				if "%{punishment::tempmute::%{_id}%::%loop-value%::reason}%" is "%{_realReason}%":
 					set {punishment::tempmute::%{_id}%::%loop-value%::reason} to content of event-message
 					broadcast "%{punishment::tempmute::%{_id}%::%loop-value%::reason}%"
+		else if {_type} contains "Kick":
+			loop {kicked::%{_id}%} times:
+				if "%{kicked::%{_id}%::%loop-value%::reason}%" is "%{_realReason}%":
+					set {kicked::%{_id}%::%loop-value%::reason} to content of event-message
 
 		reply with "You have successfully successfully updated the reason to be `%content of event-message%`"
 
@@ -209,13 +213,21 @@ discord command punishments <text>:
 	bots: {@bot}
 	trigger:
 		if event-member is staff:
-			set {_user} to arg-1 parsed as a member otherwise arg-1
+			if arg-1 parsed as member is not set:
+				retrieve user with id arg-1 and store them in {_user}
+				if {_user} is not set:
+					sendMessage("That user could not be parsed", event-channel, event-message)
+					stop
+			else:
+				set {_user} to arg-1 parsed as a member
 			set {_punished} to false
 			if {Warns::%{_user}%} is set:
 				set {_punished} to true
 			if {Mutes::%{_user}%} is set:
 				set {_punished} to true
 			if {punishment::tempmute::%{_user}%} is set:
+				set {_punished} to true
+			if {kicked::%{_user}%} is set:
 				set {_punished} to true
 			if {_punished} is false:
 				sendMessage("%{_user}%##%discriminator of {_user}% has never been punished.", event-channel, event-message)
@@ -236,6 +248,9 @@ discord command punishments <text>:
 				loop {punishment::tempmute::%{_user}%::count} times:
 					append "Temp-muted (%{punishment::tempmute::%{_user}%::%loop-value%::length}%): %{punishment::tempmute::%{_user}%::%loop-value%::reason}%" to {_m}
 					append nl to {_m}
+			if {kicked::%{_user}%} is set:
+				loop {kicked::%{_user}%} times:
+					append "Kicked for: %{kicked::%{_user}%::%loop-value%::reason}%" to {_m}
 			append "```" to {_m}
 			reply with {_m}
 			
@@ -434,6 +449,11 @@ discord command kick <member> [<string>]:
 				sendMessage("%{_error}%", event-channel, event-message)
 				stop
 			sendMessage("I have successfully kicked %arg-1%##%discriminator of arg-1% from the server", event-channel, event-message)
+			if {kicked::%arg-1%} is not set:
+				set {kicked::%arg-1%} to 1
+			else:
+				add 1 to {kicked::%arg-1%}
+			set {kicked::%arg-1%::%{kicked::%arg-1%}%::reason} to arg-2
 			set {_m} to a new message builder
 			append "**-=Kick=-**%nl%" to {_m}
 			append "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)%nl%" to {_m}
