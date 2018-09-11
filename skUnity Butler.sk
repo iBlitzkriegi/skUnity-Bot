@@ -1,10 +1,11 @@
 options:
 	bot: skUnity Butler
 	prefix: !
-	logChannel: 475337787780890644
+	logChannel: 488859255923802133
 	staffRole: 475337675461754895
 	mutedRole: 475337676317261857
 	whiteIsBoring: 475337676992806933
+	logGuild: 475328670693589002
 
 # Login to skUnity Butler
 on skript load:
@@ -13,6 +14,7 @@ on skript load:
 	login to {_token} with the name "{@bot}"
 	wait 5 seconds
 	set {channel} to channel with id "{@logChannel}"
+	set {logGuild} to guild with id "{@logGuild}"
 	set {guild} to guild of {channel}
 	set {staffRole} to role with id "{@staffRole}" in {guild}
 	set {mutedRole} to role with id "{@mutedRole}" in {guild}
@@ -20,8 +22,7 @@ on skript load:
 	mark "{@bot}" as playing "on skunity.com"
 	set {_channels::*} to split "general, skunity-meta, skript-help-1, skript-help-2, skript-help-3, java-talk, other-help, resource-meta, dev-zone, famous-quotes-of-2018, poppy-talk, counting-and-memes, bot-palace" by ", "
 	loop the text channels of {guild}:
-		if "%{_channels::*}%" contains name of loop-channel:
-			set {channel::%name of loop-value%} to loop-channel
+		set {channel::%name of loop-value%} to loop-channel
 		
 # Main function to send messages and store them to be deleted by a staff member later
 function sendMessage(content: string, channel: channel, message: message):
@@ -105,7 +106,6 @@ on direct message received:
 		replace all ")" with "" in {_id}
 		set {_reasons::*} to {_reason} split at " "
 		set {_realReason} to {_reasons::2}
-		broadcast "%{_type}%"
 		if {_type} contains "Warning":
 			set {_count::*} to {_count} split at " "
 			set {Warns::%{_id}%::%{_count::2}%} to content of event-message
@@ -470,7 +470,7 @@ discord command purge <number>:
 	bots: {@bot}
 	trigger:
 		if event-member is staff:
-			set {_num} to arg-1 + 1
+			set {_num} to arg-1
 			grab the last {_num} messages in event-channel
 			set {_messages::*} to grabbed messages
 			delete {_messages::1}
@@ -531,7 +531,7 @@ discord command tempmute <member> [<string>] <timespan>:
 			sendLog({_m})
 						
 # Event to un-mute people who are temp-muted
-every second:
+every minute:
 	loop {tempMute::*}:
 		set {_length} to {tempMute::%loop-index%::length}
 		set {_time} to {tempMute::%loop-index%::time}
@@ -666,9 +666,12 @@ on guild message received seen by "{@bot}":
 		add {mutedRole} to roles of event-member with event-bot
 
 on guild message received:
-	if id of event-guild is not "475328670693589002":
-		if {channel::%name of event-channel%} is set:
-			set {_} to a message builder
-			append "```%nl%" to {_m}
-			
-			send "%event-user%##%discriminator of event-user%(%id of event-user%) said `%event-string%`" to {channel::%name of event-channel%} with event-bot
+	id of event-guild is not "475328670693589002"
+	set {_channel} to {channel::%name of event-channel%}
+	set {_role} to first element out of roles of event-member
+	create embed:
+		set the description of embed to "%event-string%"
+		set the author info of the embed to author named "%name of event-user%" with no url and icon "%avatar of event-user%"
+		set the colour of the embed to color of {_role}
+		set the timestamp of embed to now
+	send the last created embed to {_channel} with event-bot		
