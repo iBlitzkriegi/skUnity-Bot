@@ -95,9 +95,9 @@ on direct message received:
 				set {_count} to loop-value
 			if loop-value contains "Reason":
 				set {_reason} to loop-value
-				append "**Reason**: %content of event-message%%nl%" to {_m}
+				append line "**Reason**: %content of event-message%" to {_m}
 			else:
-				append "%loop-value%%nl%" to {_m}
+				append line "%loop-value%" to {_m}
 		edit {reason::%event-user%} to show {_m}
 		delete {reason::%event-user%}
 		set {_user::*} to {_user} split at " "
@@ -150,19 +150,19 @@ discord command help [<string>]:
 					sendEmbed(last created embed, event-channel, event-message)
 					stop
 		set {_m} to a message builder
-		append "Help menu %mention tag of event-channel%%nl%" to {_m}
-		append "**General**%nl%" to {_m}
+		append line "Help menu %mention tag of event-channel%" to {_m}
+		append line "**General**" to {_m}
 		loop all discord commands:
 			set {_desc} to loop-value.getDescription()
 			if {_desc} contains "<STAFF>":
 				add loop-value to {_staff::*}
 			else:
-				append "`%loop-value%` - %{_desc}%%nl%" to {_m}
-		append "**Staff**%nl%" to {_m}
+				append line "`%loop-value%` - %{_desc}%" to {_m}
+		append line "**Staff**" to {_m}
 		loop {_staff::*}:
 			set {_desc} to loop-value.getDescription()
 			replace all "<STAFF>" with "" in {_desc}
-			append "`%loop-value%` - %{_desc}%%nl%" to {_m}
+			append line "`%loop-value%` - %{_desc}%" to {_m}
 		append "For more information on a current command, use {@prefix}help <command>. For example, {@prefix}help %random element out of all discord commands%" to {_m}
 		send {_m} to event-user with event-bot and store it in {_var}
 		sendMessage("My help information has been sent to your dm's", event-channel, event-message)
@@ -196,10 +196,10 @@ discord command ban <string> [<string>] [<number>]:
 				stop
 			sendMessage("%{_user}%##%discriminator of {_user}% has been banned", event-channel, event-message)
 			set {_m} to a new message builder
-			append "**-=Ban=-**%nl%" to {_m}
-			append "**User**: %{_user}%##%discriminator of {_user}% (%id of {_user}%)%nl%" to {_m}
-			append "**Reason**: %arg-2%%nl%" to {_m}
-			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
+			append line "**-=Ban=-**" to {_m}
+			append line "**User**: %{_user}%##%discriminator of {_user}% (%id of {_user}%)" to {_m}
+			append line "**Reason**: %arg-2%" to {_m}
+			append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
 			sendLog({_m})
 			
 			
@@ -233,24 +233,20 @@ discord command punishments <text>:
 				sendMessage("%{_user}%##%discriminator of {_user}% has never been punished.", event-channel, event-message)
 				stop
 			set {_m} to a message builder
-			append "Here are all the current punishments for %{_user}%##%discriminator of {_user}% %mention tag of event-user%!%nl%" to {_m}
-			append "```" to {_m}
-			append nl to {_m}
+			append line "Here are all the current punishments for %{_user}%##%discriminator of {_user}% %mention tag of event-user%!" to {_m}
+			append line "```" to {_m}
 			if {Warnings::%{_user}%} is set:
 				loop {Warns::%{_user}%::*}:
-					append "Warned for: %loop-value%" to {_m}
-					append nl to {_m}
+					append line "Warned for: %loop-value%" to {_m}
 			if {Mutes::%{_user}%} is set:
 				loop {Mutes::%{_user}%::*}:
-					append "Muted for: %loop-value%" to {_m}
-					append nl to {_m}
+					append line "Muted for: %loop-value%" to {_m}
 			if {punishment::tempmute::%{_user}%::count} is set:
 				loop {punishment::tempmute::%{_user}%::count} times:
-					append "Temp-muted (%{punishment::tempmute::%{_user}%::%loop-value%::length}%): %{punishment::tempmute::%{_user}%::%loop-value%::reason}%" to {_m}
-					append nl to {_m}
+					append line "Temp-muted (%{punishment::tempmute::%{_user}%::%loop-value%::length}%): %{punishment::tempmute::%{_user}%::%loop-value%::reason}%" to {_m}
 			if {kicked::%{_user}%} is set:
 				loop {kicked::%{_user}%} times:
-					append "Kicked for: %{kicked::%{_user}%::%loop-value%::reason}%" to {_m}
+					append line "Kicked for: %{kicked::%{_user}%::%loop-value%::reason}%" to {_m}
 			append "```" to {_m}
 			reply with {_m}
 			
@@ -286,10 +282,10 @@ discord command unban <string> [<string>]:
 						stop
 					sendMessage("That user has been unbanned", event-channel, event-message)
 					set {_m} to a new message builder
-					append "**-=Pardon=-**%nl%" to {_m}
-					append "**User**: %name of loop-value%##%discriminator of loop-value%%nl%" to {_m}
-					append "**Reason**: %arg-2%%nl%" to {_m}
-					append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
+					append line "**-=Pardon=-**" to {_m}
+					append line "**User**: %name of loop-value%##%discriminator of loop-value%" to {_m}
+					append line "**Reason**: %arg-2%" to {_m}
+					append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
 					sendLog({_m})
 					stop
 			sendMessage("The provided user was not banned", event-channel, event-message)
@@ -316,11 +312,11 @@ discord command warn <member> [<string>]:
 			send "You have received warning number %{Warnings::%arg-1%}%! You must be careful, too many warnings may lead to severe consequences. You were warned for: `%arg-2%`" to arg-1 with event-bot
 			set {_m} to a new message builder
 			set {Warns::%arg-1%::%{Warnings::%arg-1%}%} to arg-2
-			append "**-=Warning=-**%nl%" to {_m}
-			append "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)%nl%" to {_m}
-			append "**Reason**: %arg-2%%nl%" to {_m}
-			append "**Count**: %{Warnings::%arg-1%}%%nl%" to {_m}
-			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
+			append line "**-=Warning=-**" to {_m}
+			append line "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)" to {_m}
+			append line "**Reason**: %arg-2%" to {_m}
+			append line "**Count**: %{Warnings::%arg-1%}%" to {_m}
+			append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
 			sendLog({_m})
 			sendMessage("I have issued a warning to %arg-1%##%discriminator of arg-1%", event-channel, event-message)
 			
@@ -350,11 +346,11 @@ discord command warnings <string> [<number>]:
 				sendMessage("That user was warned for `%{Warns::%{_user}%::%arg-2%}%`", event-channel, event-message)
 				stop
 			set {_m} to a message builder
-			append "```vbs%nl%" to {_m}
+			append line "```vbs" to {_m}
 			set {_count} to 0
 			loop {Warns::%{_user}%::*}:
 				add 1 to {_count}
-				append "%{_count}%) %loop-value%%nl%" to {_m}
+				append line "%{_count}%) %loop-value%" to {_m}
 			append "```" to {_m}
 			send {_m} to event-channel with "{@bot}" and store it in {_msg}
 			add reaction "x" to {_msg} with "{@bot}"
@@ -390,10 +386,10 @@ discord command mute <member> [<string>]:
 			set {Mutes::%arg-1%::%{Mutes::%arg-1%}%} to arg-2
 			sendMessage("%name of arg-1%##%discriminator of arg-1% has been muted", event-channel, event-message)
 			set {_m} to a new message builder
-			append "**-=Mute=-**%nl%" to {_m}
-			append "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)%nl%" to {_m}
-			append "**Reason**: %arg-2%%nl%" to {_m}
-			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
+			append line "**-=Mute=-**" to {_m}
+			append line "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)" to {_m}
+			append line "**Reason**: %arg-2%" to {_m}
+			append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
 			sendLog({_m})
 	
 # Command to un-mute users
@@ -425,10 +421,10 @@ discord command unmute <member> [<string>]:
 			sendMessage("%arg-1%##%discriminator of arg-1% has been un-muted", event-channel, event-message)
 			set {evaders::%arg-1%} to false
 			set {_m} to a new message builder
-			append "**-=Un-Mute=-**%nl%" to {_m}
-			append "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)%nl%" to {_m}
-			append "**Reason**: %arg-2%%nl%" to {_m}
-			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
+			append line "**-=Un-Mute=-**" to {_m}
+			append line "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)" to {_m}
+			append line "**Reason**: %arg-2%" to {_m}
+			append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
 			sendLog({_m})			
 			
 # Command to kick users, may provide a reason 
@@ -455,10 +451,10 @@ discord command kick <member> [<string>]:
 				add 1 to {kicked::%arg-1%}
 			set {kicked::%arg-1%::%{kicked::%arg-1%}%::reason} to arg-2
 			set {_m} to a new message builder
-			append "**-=Kick=-**%nl%" to {_m}
-			append "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)%nl%" to {_m}
-			append "**Reason**: %arg-2%%nl%" to {_m}
-			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
+			append line "**-=Kick=-**" to {_m}
+			append line "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)" to {_m}
+			append line "**Reason**: %arg-2%" to {_m}
+			append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
 			sendLog({_m})
 	
 # Command to purge messages 
@@ -481,10 +477,10 @@ discord command purge <number>:
 				stop
 			sendMessage("I have successfully purged %arg-1% messages", event-channel, event-message)
 			set {_m} to a new message builder
-			append "**-=Purge=-**%nl%" to {_m}
-			append "**Channel**: %mention tag of event-channel%%nl%" to {_m}
-			append "**Amount of Messages**: %arg-1%%nl%" to {_m}
-			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
+			append line "**-=Purge=-**" to {_m}
+			append line "**Channel**: %mention tag of event-channel%" to {_m}
+			append line "**Amount of Messages**: %arg-1%" to {_m}
+			append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
 			send {_m} to {channel} with event-bot 
 			
 			
@@ -523,11 +519,11 @@ discord command tempmute <member> [<string>] <timespan>:
 			set {evaders::%arg-1%} to true
 			sendMessage("I have successfully muted %arg-1%##%discriminator of arg-1% for %arg-3%", event-channel, event-message)
 			set {_m} to a new message builder
-			append "**-=Temp-Mute=-**%nl%" to {_m}
-			append "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)%nl%" to {_m}
-			append "**Reason**: %arg-2%%nl%" to {_m}
-			append "**Amount of time**: %arg-3%%nl%" to {_m}
-			append "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
+			append line "**-=Temp-Mute=-**" to {_m}
+			append line "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)" to {_m}
+			append line "**Reason**: %arg-2%" to {_m}
+			append line "**Amount of time**: %arg-3%" to {_m}
+			append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
 			sendLog({_m})
 						
 # Event to un-mute people who are temp-muted
@@ -635,17 +631,17 @@ discord command user [<member>]:
 			set the author info of the embed to author named "Who is %name of {_user}%" with no url and no icon 
 			set the thumbnail of embed to "%avatar of {_user}%"
 			set {_m} to a message builder
-			append "Name: **%name of {_user}%##%discriminator of {_user}%**%nl%" to {_m}
-			append "ID: **%id of {_user}%**%nl%" to {_m}
-			append "Joined Discord: **%{_discordDate::1}%**%nl%" to {_m}
+			append line "Name: **%name of {_user}%##%discriminator of {_user}%**" to {_m}
+			append line "ID: **%id of {_user}%**" to {_m}
+			append line "Joined Discord: **%{_discordDate::1}%**" to {_m}
 			append nl to {_m}
-			append "__**General**__:%nl%" to {_m}
+			append line "__**General**__:" to {_m}
 			set {_status} to status of {_user}
-			append "Status: **%{_status}.toString().toUpperCase()%**%nl%" to {_m}
-			append "Nick: **%nickname of {_user} in event-guild%**%nl%" to {_m}
-			append "Game: **%{_game}%**%nl%" to {_m}
-			append "Bot: **%{_bot}.toString().toUpperCase()%**%nl%" to {_m}
-			append "Joined Guild: **%{_guildDate::1}%**%nl%" to {_m}
+			append line "Status: **%{_status}.toString().toUpperCase()%**" to {_m}
+			append line "Nick: **%nickname of {_user} in event-guild%**" to {_m}
+			append line "Game: **%{_game}%**" to {_m}
+			append line "Bot: **%{_bot}.toString().toUpperCase()%**" to {_m}
+			append line "Joined Guild: **%{_guildDate::1}%**" to {_m}
 			set the description of the embed to "%{_m}%"
 		sendEmbed(last created embed, event-channel, event-message)
 		
