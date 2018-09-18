@@ -20,7 +20,6 @@ on skript load:
 	set {mutedRole} to role with id "{@mutedRole}" in {guild}
 	set {whiteIsBoring} to role with id "{@whiteIsBoring}" in {guild}
 	mark "{@bot}" as playing "on skunity.com"
-	set {_channels::*} to split "general, skunity-meta, skript-help-1, skript-help-2, skript-help-3, java-talk, other-help, resource-meta, dev-zone, famous-quotes-of-2018, poppy-talk, counting-and-memes, bot-palace" by ", "
 	loop the text channels of {guild}:
 		set {channel::%name of loop-value%} to loop-channel
 		
