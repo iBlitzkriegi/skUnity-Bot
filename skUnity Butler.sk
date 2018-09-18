@@ -274,12 +274,13 @@ discord command unban <string> [<string>]:
 				stop
 			loop grabbed bans:
 				if id of loop-value is arg-1:
+					retrieve user with id "%id of loop-value%" and store them in {_user}
 					unban loop-value from event-guild
 					set {_error} to last vixio error
 					if {_error} is set:
 						sendMessage("%{_error}%", event-channel, event-message)
 						stop
-					sendMessage("That user has been unbanned", event-channel, event-message)
+					sendMessage("%{_user}%##%discriminator of {_user}% has been unbanned", event-channel, event-message)
 					set {_m} to a new message builder
 					append line "**-=Pardon=-**" to {_m}
 					append line "**User**: %name of loop-value%##%discriminator of loop-value%" to {_m}
@@ -320,7 +321,7 @@ discord command warn <member> [<string>]:
 			sendMessage("I have issued a warning to %arg-1%##%discriminator of arg-1%", event-channel, event-message)
 			
 # Command to get warnings for a user 
-discord command warnings <string> [<number>]:
+discord command warnings [<string>] [<number>]:
 	description: <STAFF>Get either all the warnings of a user or a specific warning number from a user
 	executable in: guild 
 	usage: warnings <mention|user id|name##discriminator> [<warning number>]
@@ -328,6 +329,9 @@ discord command warnings <string> [<number>]:
 	bots: {@bot}
 	trigger:
 		if event-member is staff:
+			if arg-1 is not set:
+				sendMessage("You must include a user to get the warnings of", event-channel, event-message)
+				stop
 			if arg-1 parsed as member is not set:
 				retrieve user with id arg-1 and store them in {_user}
 				if {_user} is not set:
@@ -354,6 +358,21 @@ discord command warnings <string> [<number>]:
 			send {_m} to event-channel with "{@bot}" and store it in {_msg}
 			add reaction "x" to {_msg} with "{@bot}"
 			set {{@bot}.%{_msg}%} to {_message}
+		else:
+			if {Warnings::%event-member%} is not set:
+				sendMessage("You currently have no warnings", event-channel, event-message)
+				stop
+			set {_m} to a message builder
+			append line "Here is a list of your current warnings %mention tag of event-member%"
+			append line "```"
+			set {_c} to 1
+			loop {Warns::%event-member%::*}:
+				append line "%{_c}%) %loop-value%"
+				add 1 to {_c}
+			append "```"
+			send {_m} to event-channel with "{@bot}" and store it in {_msg}
+			add reaction "x" to {_msg} with "{@bot}"
+			set {{@bot}.%{_msg}%} to {_message}
 				
 # Command to remove a warning from a user
 discord command relieve <member> <number>:
@@ -368,7 +387,7 @@ discord command relieve <member> <number>:
 				sendMessage("%arg-1%##%discriminator of arg-1% currently has no warnings", event-channel, event-message)
 				stop
 			if {Warns::%arg-1%::%arg-2%} is not set:
-				sendMessage("That user does not have a warning attached to that number", event-channel, event-message)
+				sendMessage("%arg-1%##%discriminator of arg-1% does not have a warning attached to that number", event-channel, event-message)
 				stop
 			subtract 1 from {Warnings::%arg-1%}
 			send "Your warning for %{Warns::%arg-1%::%arg-2%}% has been reverted by %event-user%! Your new warning count is %{Warnings::%arg-1%}%" to arg-1 with event-bot
