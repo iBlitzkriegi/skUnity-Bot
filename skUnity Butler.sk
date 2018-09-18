@@ -85,7 +85,7 @@ on direct message received:
 			stop
 		set {_m} to a message builder
 		set {_count} to 0
-		loop split content of {reason::%event-user%} at "%nl%":
+		loop split content of {reason::%event-user%} at nl:
 			add 1 to {_count}
 			if {_count} is 1:
 				set {_type} to loop-value
@@ -377,7 +377,7 @@ discord command mute <member> [<string>]:
 			if {_roles::*} contains {mutedRole}:
 				sendMessage("%arg-1%##%discriminator of arg-1% is already muted", event-channel, event-message)
 				stop
-			add {mutedRole} to roles of arg-1 with "{@bot}"
+			add {mutedRole} to roles of arg-1
 			set {_error} to last vixio error
 			if {_error} is set:
 				sendMessage("%{_error}%", event-channel, event-message)
@@ -412,7 +412,7 @@ discord command unmute <member> [<string>]:
 			if {_roles::*} does not contain {mutedRole}:
 				sendMessage("That user is not currently muted", event-channel, event-message)
 				stop
-			remove {mutedRole} from roles of arg-1 with event-bot
+			remove {mutedRole} from roles of arg-1
 			set {_error} to last vixio error 
 			if {_error} is set:
 				sendMessage("I ran into an error! `%{_error}%`", event-channel, event-message)
@@ -504,7 +504,7 @@ discord command tempmute <member> [<string>] <timespan>:
 			if {_roles::*} contains {mutedRole}:
 				sendMessage("That user is already muted", event-channel, event-message)
 				stop
-			add {mutedRole} to roles of arg-1 with "{@bot}"
+			add {mutedRole} to roles of arg-1
 			set {_error} to last vixio error 
 			if {_error} is set:
 				sendMessage("I ran into an error! `%{_error}%`", event-channel, event-message)
@@ -583,10 +583,10 @@ discord command addall:
 					set {_roles::*} to roles of {_member}
 					if {_roles::*} is not set:
 						add 1 to {_count}
-						add {whiteIsBoring} to roles of {_member} with event-bot
+						add {whiteIsBoring} to roles of {_member}
 					else if {_roles::*} does not contain {whiteIsBoring}:
 						add 1 to {_count}
-						add {whiteIsBoring} to roles of {_member} with event-bot
+						add {whiteIsBoring} to roles of {_member}
 			sendMessage("%{_count}% people have received the white is boring role", event-channel, event-message)
 			
 # Evaluate script code through the bot, empty trigger for documentation purposes
@@ -670,8 +670,8 @@ on guild message received:
 	set {_channel} to {channel::%name of event-channel%}
 	set {_role} to first element out of roles of event-member
 	create embed:
-		set the description of embed to "%event-string%"
-		set the author info of the embed to author named "%name of event-user%" with no url and icon "%avatar of event-user%"
+		set the description of embed to event-string
+		set the author info of the embed to author named name of event-user with no url and icon "%avatar of event-user%"
 		set the colour of the embed to color of {_role}
 		set the timestamp of embed to now
-	send the last created embed to {_channel} with event-bot		
+	send the last created embed to {_channel} with event-bot	
