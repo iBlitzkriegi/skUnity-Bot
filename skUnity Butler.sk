@@ -355,6 +355,28 @@ discord command warnings <string> [<number>]:
 			add reaction "x" to {_msg} with "{@bot}"
 			set {{@bot}.%{_msg}%} to {_message}
 				
+# Command to remove a warning from a user
+discord command relieve <member> <number>:
+	description: <STAFF>Remove a warning by number from a user
+	executable in: guild
+	usage: relieve <member> <warningNumber>
+	prefixes: {@prefix}
+	bots: {@bot}
+	trigger:
+		if event-member is staff:
+			if {Warnings::%arg-1%} is not set:
+				sendMessage("%arg-1%##%discriminator of arg-1% currently has no warnings", event-channel, event-message)
+				stop
+			if {Warns::%arg-1%::%arg-2%} is not set:
+				sendMessage("That user does not have a warning attached to that number", event-channel, event-message)
+				stop
+			subtract 1 from {Warnings::%arg-1%}
+			send "Your warning for %{Warns::%arg-1%::%arg-2%}% has been reverted by %event-user%! Your new warning count is %{Warnings::%arg-1%}%" to arg-1 with event-bot
+			sendMessage("Successfully reverted %arg-1%##%discriminator of arg-1%'s warning. New warning count is %{Warnings::%arg-1%}%", event-channel, event-message)
+			if {Warnings::%arg-1%} is 0:
+				delete {Warnings::%arg-1%}
+			delete {Warns::%arg-1%::%arg-2%}
+
 
 # Command to mute users, may provide a reason	
 discord command mute <member> [<string>]:
@@ -596,9 +618,6 @@ discord command eval <string>:
 			set {_msg} to arg-1
 			if {_msg} contains "```":
 				replace all "```" with "" in {_msg}
-				sendMessage("Attempting to evaluate that for you", event-channel, event-message)
-			else:
-				sendMessage("Attempting to evaluate `%{_msg}%` for you", event-channel, event-message)
 			evaluate logging errors in {errors::*}: {_msg}
 			if {errors::*} is set:
 				sendMessage("Ran into a error! `%{errors::*}%`", event-channel, event-message)
