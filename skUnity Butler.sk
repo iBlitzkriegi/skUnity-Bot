@@ -725,11 +725,9 @@ on guild message received:
 			set {lastMessage::%event-user%::%content of event-message%} to now
 		if "%content of event-message%" is "%{lastMessage::%event-user%}%":
 			add 1 to {lastMessage::%event-user%::%content of event-message%::count}
-			broadcast "%{lastMessage::%event-user%::%content of event-message%::count}%"
 			if {lastMessage::%event-user%::%content of event-message%::count} is more than or equal to 5:
 				set {_difference} to difference between {lastMessage::%event-user%::%content of event-message%} and now
 				if {_difference} is less than 30 seconds:
-					broadcast "%difference between {lastMessage::%event-user%::%content of event-message%} and now%"
 					add {mutedRole} to roles of event-member
 					clear {lastMessage::%event-user%::*}
 					delete {lastMessage::%event-user%}
