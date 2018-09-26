@@ -6,6 +6,7 @@ options:
 	mutedRole: 475337676317261857
 	whiteIsBoring: 475337676992806933
 	logGuild: 475328670693589002
+	administratorRole: 475337677881999364
 
 # Login to skUnity Butler
 on skript load:
@@ -19,6 +20,7 @@ on skript load:
 	set {staffRole} to role with id "{@staffRole}" in {guild}
 	set {mutedRole} to role with id "{@mutedRole}" in {guild}
 	set {whiteIsBoring} to role with id "{@whiteIsBoring}" in {guild}
+	set {administratorRole} to role with id "{@administratorRole}"
 	mark "{@bot}" as playing "on skunity.com"
 	loop the text channels of {guild}:
 		set {channel::%name of loop-value%} to loop-channel
@@ -38,9 +40,12 @@ function needReason(message: message, channel: channel):
 
 # Custom syntax to check if a member is staff 
 member property condition staff:
-    check:
-        set {_roles::*} to roles of expr-1
-        continue if {_roles::*} contains {staffRole}
+	check:
+		set {_roles::*} to roles of expr-1
+		if {_roles::*} contains {staffRole}:
+			continue
+		else if {_roles::*} contains {administratorRole}:
+			continue
 	
 # Function to send a embed
 function sendEmbed(embed: embed builder, channel: channel, message: message):
