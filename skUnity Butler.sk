@@ -688,16 +688,18 @@ on member join guild seen by "{@bot}":
 	if {evaders::%event-user%} is set:
 		if {evaders::%event-user%} is true:
 			wait 3 seconds
-			add {mutedRole} to roles of event-member with event-bot
+			add {mutedRole} to roles of event-member
 	wait 3 seconds
-	add {whiteIsBoring} to roles of event-member with event-bot
-			
+	add {whiteIsBoring} to roles of event-member
+# TODO: Combine all three guild message rec events into one 			
 # Event to stop muted people from speaking if they are trying to mute evade
 on guild message received seen by "{@bot}":
+	id of event-guild is id of {guild}
 	if {evaders::%event-user%} is true:
 		delete event-message with event-bot
-		add {mutedRole} to roles of event-member with event-bot
+		add {mutedRole} to roles of event-member
 
+# Logger to send all messages to the logging guild		
 on guild message received:
 	id of event-guild is not "475328670693589002"
 	set {_channel} to {channel::%name of event-channel%}
@@ -707,4 +709,31 @@ on guild message received:
 		set the author info of the embed to author named name of event-user with no url and icon "%avatar of event-user%"
 		set the colour of the embed to color of {_role}
 		set the timestamp of embed to now
-	send the last created embed to {_channel} with event-bot	
+	send the last created embed to {_channel} with event-bot
+	
+
+on guild message received:
+	if event-member is not staff:
+		id of event-guild is id of {guild}
+		set {lastMessage::%event-user%} to content of event-message
+		if {lastMessage::%event-user%::%content of event-message%} is not set:
+			set {lastMessage::%event-user%::%content of event-message%} to now
+		if "%content of event-message%" is "%{lastMessage::%event-user%}%":
+			add 1 to {lastMessage::%event-user%::%content of event-message%::count}
+			broadcast "%{lastMessage::%event-user%::%content of event-message%::count}%"
+			if {lastMessage::%event-user%::%content of event-message%::count} is more than or equal to 5:
+				set {_difference} to difference between {lastMessage::%event-user%::%content of event-message%} and now
+				if {_difference} is less than 30 seconds:
+					broadcast "%difference between {lastMessage::%event-user%::%content of event-message%} and now%"
+					add {mutedRole} to roles of event-member
+					clear {lastMessage::%event-user%::*}
+					delete {lastMessage::%event-user%}
+					set {evaders::%event-user%} to true
+					set {_} to a message builder
+					append line "**-=Auto Mute=-**"
+					append line "**User**: %event-user%::%discriminator of event-user%"
+					append line "**Reason**: Spam"
+					#TODO MAKE IT PING STAFF
+					append line "@here"
+					send {_} to {channel} with "{@bot}" and store it in {_msg}
+
