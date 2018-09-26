@@ -174,7 +174,7 @@ discord command help [<string>]:
 # Command to ban users
 discord command ban <string> [<string>] [<number>]:
 	description: <STAFF>Ban a member. Input can be a direct mention, user id, or name##discrim. Must provide a reason. The last argument is the amount of days worth of messages to clear.
-	usage: ban <user> <reason> [<days of messages to prune>]
+	usage: ban <mention|user id|name##discriminator> <reason> [<days of messages to prune>]
 	prefixes: {@prefix}
 	executable in: guild
 	bots: {@bot}
@@ -190,6 +190,7 @@ discord command ban <string> [<string>] [<number>]:
 					stop
 			else:
 				set {_user} to arg-1 parsed as a member
+			send "You have been banned from the skUnity Discord for `%arg-2%`. If you wish to appeal this ban, you may talk to %event-user%##%discriminator of event-user% at a later date." to {_user} with event-bot
 			if arg-3 is not set:
 				ban {_user} from event-guild due to arg-2
 			else:
@@ -211,7 +212,7 @@ discord command ban <string> [<string>] [<number>]:
 # Command to get all of the punishments a user has had
 discord command punishments <text>:
 	description: <STAFF>Get all of the punishments a user has had.
-	usage: punishments <id|mention tag> 
+	usage: punishments <mention|user id|name##discriminator>
 	executable in: guild
 	prefixes: {@prefix}
 	bots: {@bot}
@@ -225,7 +226,7 @@ discord command punishments <text>:
 			else:
 				set {_user} to arg-1 parsed as a member
 			set {_punished} to false
-			if {Warns::%{_user}%} is set:
+			if {Warnings::%{_user}%} is set:
 				set {_punished} to true
 			if {Mutes::%{_user}%} is set:
 				set {_punished} to true
@@ -314,7 +315,7 @@ discord command warn <member> [<string>]:
 				set {Warnings::%arg-1%} to 1
 			else:
 				add 1 to {Warnings::%arg-1%}
-			send "You have received warning number %{Warnings::%arg-1%}%! You must be careful, too many warnings may lead to severe consequences. You were warned for: `%arg-2%`" to arg-1 with event-bot
+			send "You have received warning number `%{Warnings::%arg-1%}%`! You must be careful, too many warnings may lead to severe consequences. You were warned for: `%arg-2%`" to arg-1 with event-bot
 			set {_m} to a new message builder
 			set {Warns::%arg-1%::%{Warnings::%arg-1%}%} to arg-2
 			append line "**-=Warning=-**" to {_m}
@@ -383,7 +384,7 @@ discord command warnings [<string>] [<number>]:
 discord command relieve <member> <number>:
 	description: <STAFF>Remove a warning by number from a user
 	executable in: guild
-	usage: relieve <member> <warningNumber>
+	usage: relieve <mention|user id|name##discriminator> <warning number>
 	prefixes: {@prefix}
 	bots: {@bot}
 	trigger:
@@ -395,7 +396,7 @@ discord command relieve <member> <number>:
 				sendMessage("%arg-1%##%discriminator of arg-1% does not have a warning attached to that number", event-channel, event-message)
 				stop
 			subtract 1 from {Warnings::%arg-1%}
-			send "Your warning for %{Warns::%arg-1%::%arg-2%}% has been reverted by %event-user%! Your new warning count is %{Warnings::%arg-1%}%" to arg-1 with event-bot
+			send "Your warning for `%{Warns::%arg-1%::%arg-2%}%` has been reverted by %event-user%! Your new warning count is `%{Warnings::%arg-1%}%`" to arg-1 with event-bot
 			sendMessage("Successfully reverted %arg-1%##%discriminator of arg-1%'s warning. New warning count is %{Warnings::%arg-1%}%", event-channel, event-message)
 			if {Warnings::%arg-1%} is 0:
 				delete {Warnings::%arg-1%}
@@ -404,7 +405,7 @@ discord command relieve <member> <number>:
 
 # Command to mute users, may provide a reason	
 discord command mute <member> [<string>]:
-	description: <STAFF>Mute a user, must provide a reason
+	description: <STAFF>Mute a user, must provide a reason.
 	executable in: guild
 	usage: mute <mention|user id|name##discriminator> <reason>
 	prefixes: {@prefix}
@@ -429,6 +430,7 @@ discord command mute <member> [<string>]:
 			else:
 				add 1 to {Mutes::%arg-1%}
 			set {Mutes::%arg-1%::%{Mutes::%arg-1%}%} to arg-2
+			send "You have been muted for `%arg-2%` and will be unmuted at the responsible staff member's discretion." to arg-1 with event-bot
 			sendMessage("%name of arg-1%##%discriminator of arg-1% has been muted", event-channel, event-message)
 			set {_m} to a new message builder
 			append line "**-=Mute=-**" to {_m}
@@ -437,11 +439,11 @@ discord command mute <member> [<string>]:
 			append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
 			sendLog({_m})
 	
-# Command to un-mute users
+# Command to unmute users
 discord command unmute <member> [<string>]:
 	description: <STAFF>Un-mute a user, must provide a reason
 	executable in: guild 
-	usage: unmute <mention|user id||name##discriminator> <reason>
+	usage: unmute <mention|user id|name##discriminator> <reason>
 	prefixes: {@prefix}
 	bots: {@bot}
 	trigger:
@@ -463,7 +465,7 @@ discord command unmute <member> [<string>]:
 				delete {tempMute::%arg-1%::time}
 				delete {tempMute::%arg-1%::length}
 				delete {tempMute::%arg-1%::*}
-			sendMessage("%arg-1%##%discriminator of arg-1% has been un-muted", event-channel, event-message)
+			sendMessage("%arg-1%##%discriminator of arg-1% has been unmuted", event-channel, event-message)
 			set {evaders::%arg-1%} to false
 			set {_m} to a new message builder
 			append line "**-=Un-Mute=-**" to {_m}
@@ -484,6 +486,7 @@ discord command kick <member> [<string>]:
 			if arg-2 is not set:
 				needReason(event-message, event-channel)
 				stop
+			send "You have been kicked from the skUnity Discord for `%arg-2%`." to arg-1 with event-bot
 			kick arg-1 from event-guild due to arg-2 with event-bot
 			set {_error} to last vixio error
 			if {_error} is set:
@@ -530,7 +533,7 @@ discord command purge <number>:
 			
 			
 # Command to temporarily mute something 
-discord command tempmute <member> [<string>] <timespan>:
+discord command tempmute <member> [<string>] [<timespan>]:
 	description: <STAFF>Temporarily mute a user by ID or by a direct mention, must include a timespan and a reason.
 	usage: tempmute <user id|direct mention|name##discriminator> <reason> <timespan>
 	prefixes: {@prefix}
@@ -540,6 +543,9 @@ discord command tempmute <member> [<string>] <timespan>:
 		if event-member is staff:
 			if arg-2 is not set:
 				needReason(event-message, event-channel)
+				stop
+			if arg-3 is not set:
+				sendMessage("You must include a amount of time to mute the user for", event-channel, event-message)
 				stop
 			set {_roles::*} to roles of arg-1
 			if {_roles::*} contains {mutedRole}:
@@ -555,13 +561,13 @@ discord command tempmute <member> [<string>] <timespan>:
 			else:
 				add 1 to {punishment::tempmute::%arg-1%::count}
 			set {_count} to {punishment::tempmute::%arg-1%::count}
-			reply with "%{_count}%"
 			set {punishment::tempmute::%arg-1%::%{_count}%::reason} to arg-2
 			set {punishment::tempmute::%arg-1%::%{_count}%::length} to arg-3
 			set {tempMute::%arg-1%} to arg-1
 			set {tempMute::%arg-1%::length} to arg-3
 			set {tempMute::%arg-1%::time} to now
 			set {evaders::%arg-1%} to true
+			send "You have been temporarily muted for `%arg-2%`, the length of the temp mute is `%arg-3%`." to arg-1 with event-bot
 			sendMessage("I have successfully muted %arg-1%##%discriminator of arg-1% for %arg-3%", event-channel, event-message)
 			set {_m} to a new message builder
 			append line "**-=Temp-Mute=-**" to {_m}
@@ -600,6 +606,7 @@ discord command reload:
 	usage: reload
 	description: <STAFF>Reload's the skript
 	bots: {@bot}
+	executable in: guild
 	trigger:
 		if event-member is staff:
 			clear {errors::*}
@@ -614,6 +621,7 @@ discord command addall:
 	usage: addall 
 	description: <STAFF>Add the White Is Boring role to everyone who doesn't have it
 	bots: {@bot}
+	executable in: guild
 	trigger:
 		if event-member is staff:
 			set {_count} to 0
@@ -706,7 +714,7 @@ on guild message received seen by "{@bot}":
 
 # Logger to send all messages to the logging guild		
 on guild message received:
-	id of event-guild is not "475328670693589002"
+	id of event-guild is not id of {logGuild}
 	set {_channel} to {channel::%name of event-channel%}
 	set {_role} to first element out of roles of event-member
 	create embed:
@@ -733,10 +741,11 @@ on guild message received:
 					delete {lastMessage::%event-user%}
 					set {evaders::%event-user%} to true
 					set {_} to a message builder
-					append line "**-=Auto Mute=-**"
+					append line "**-=Auto-Mute=-**"
 					append line "**User**: %event-user%::%discriminator of event-user%"
 					append line "**Reason**: Spam"
 					#TODO MAKE IT PING STAFF
 					append line "@here"
 					send {_} to {channel} with "{@bot}" and store it in {_msg}
+					
 
