@@ -719,7 +719,7 @@ on guild message received:
 	set {_role} to first element out of roles of event-member
 	create embed:
 		set the description of embed to event-string
-		set the author info of the embed to author named name of event-user with no url and icon "%avatar of event-user%"
+		set the author info of the embed to author named name of event-user with url "%jump url of event-message%" and icon "%avatar of event-user%"
 		set the colour of the embed to color of {_role}
 		set the timestamp of embed to now
 	send the last created embed to {_channel} with event-bot
@@ -744,7 +744,6 @@ on guild message received:
 					append line "**-=Auto-Mute=-**"
 					append line "**User**: %event-user%::%discriminator of event-user%"
 					append line "**Reason**: Spam"
-					#TODO MAKE IT PING STAFF
 					append line "@here"
 					send {_} to {channel} with "{@bot}" and store it in {_msg}
 
@@ -761,3 +760,4 @@ every minute:
 # Clear stored messages on shutdown 
 on skript unload:
 	clear {lastMessage::*}
+	
