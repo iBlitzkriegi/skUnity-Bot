@@ -22,8 +22,9 @@ on skript load:
 	set {whiteIsBoring} to role with id "{@whiteIsBoring}" in {guild}
 	set {administratorRole} to role with id "{@administratorRole}"
 	mark "{@bot}" as playing "on skunity.com"
-	loop the text channels of {guild}:
+	loop the text channels of {logGuild}:
 		set {channel::%name of loop-value%} to loop-channel
+	broadcast "skUnity bot has successfully finished loading!"
 		
 # Main function to send messages and store them to be deleted by a staff member later
 function sendMessage(content: string, channel: channel, message: message):
@@ -122,7 +123,6 @@ on direct message received:
 			loop {punishment::tempmute::%{_id}%::count} times:
 				if "%{punishment::tempmute::%{_id}%::%loop-value%::reason}%" is "%{_realReason}%":
 					set {punishment::tempmute::%{_id}%::%loop-value%::reason} to content of event-message
-					broadcast "%{punishment::tempmute::%{_id}%::%loop-value%::reason}%"
 		else if {_type} contains "Kick":
 			loop {kicked::%{_id}%} times:
 				if "%{kicked::%{_id}%::%loop-value%::reason}%" is "%{_realReason}%":
@@ -486,7 +486,8 @@ discord command kick <member> [<string>]:
 			if arg-2 is not set:
 				needReason(event-message, event-channel)
 				stop
-			send "You have been kicked from the skUnity Discord for `%arg-2%`." to arg-1 with event-bot
+			if bot state of arg-1 is false:
+				send "You have been kicked from the skUnity Discord for `%arg-2%`." to arg-1 with event-bot
 			kick arg-1 from event-guild due to arg-2 with event-bot
 			set {_error} to last vixio error
 			if {_error} is set:
@@ -584,6 +585,7 @@ every minute:
 		set {_time} to {tempMute::%loop-index%::time}
 		set {_difference} to "%difference between {_time} and now%"
 		if difference between {tempMute::%loop-index%::time} and now is more than {tempMute::%loop-index%::length}:
+			wait 3 seconds
 			remove {mutedRole} from roles of {tempMute::%loop-index%} in guild of {channel} with "{@bot}"
 			delete {tempMute::%loop-index%::*}
 			delete {tempMute::%loop-index%}
@@ -708,9 +710,10 @@ on member join guild seen by "{@bot}":
 # Event to stop muted people from speaking if they are trying to mute evade
 on guild message received seen by "{@bot}":
 	id of event-guild is id of {guild}
-	if {evaders::%event-user%} is true:
-		delete event-message with event-bot
-		add {mutedRole} to roles of event-member
+	if {evaders::%event-user%} is set:
+		if {evaders::%event-user%} is true:
+			delete event-message with event-bot
+			add {mutedRole} to roles of event-member
 
 # Logger to send all messages to the logging guild		
 on guild message received:
@@ -728,6 +731,7 @@ on guild message received:
 on guild message received:
 	if event-member is not staff:
 		id of event-guild is id of {guild}
+		bot state of event-user is false
 		set {lastMessage::%event-user%} to content of event-message
 		if {lastMessage::%event-user%::%content of event-message%} is not set:
 			set {lastMessage::%event-user%::%content of event-message%} to now
@@ -742,7 +746,7 @@ on guild message received:
 					set {evaders::%event-user%} to true
 					set {_} to a message builder
 					append line "**-=Auto-Mute=-**"
-					append line "**User**: %event-user%::%discriminator of event-user%"
+					append line "**User**: %event-user%##%discriminator of event-user% (%id of event-user%)"
 					append line "**Reason**: Spam"
 					append line "@here"
 					send {_} to {channel} with "{@bot}" and store it in {_msg}
