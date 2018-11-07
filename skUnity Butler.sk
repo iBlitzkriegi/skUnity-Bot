@@ -722,7 +722,10 @@ on guild message received:
 	set {_role} to first element out of roles of event-member
 	create embed:
 		set the description of embed to event-string
-		set the author info of the embed to author named name of event-user with url "%jump url of event-message%" and icon "%avatar of event-user%"
+		if avatar of event-user is set:
+			set the author info of the embed to author named name of event-user with url "%jump url of event-message%" and icon "%avatar of event-user%"
+		else:
+			set the author info of the embed to author named name of event-user with url "%jump url of event-message%" and icon "%default avatar of event-user%"
 		set the colour of the embed to color of {_role}
 		set the timestamp of embed to now
 	send the last created embed to {_channel} with event-bot
