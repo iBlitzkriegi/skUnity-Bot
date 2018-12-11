@@ -37,6 +37,13 @@ function needReason(message: message, channel: channel):
 	send "You must include a reason to use this command" to {_channel} with "{@bot}" and store it in {_msg}
 	add reaction "x" to {_msg} with "{@bot}"
 	set {{@bot}.%{_msg}%} to {_message}
+	
+# Function to test perm errors
+function permCheck(string: permission) :: boolean:
+		return false
+	if {_permission} contains "run the action send message with":
+		return false
+	return true
 
 
 # Custom syntax to check if a member is staff 
@@ -47,7 +54,7 @@ member property condition staff:
 			continue
 		else if {_roles::*} contains {administratorRole}:
 			continue
-	
+		
 # Function to send a embed
 function sendEmbed(embed: embed builder, channel: channel, message: message):
 	set {_m} to a message builder
@@ -195,8 +202,8 @@ discord command ban <string> [<string>] [<number>]:
 				ban {_user} from event-guild due to arg-2
 			else:
 				ban {_user} from event-guild due to arg-2 and delete arg-3 days of messages
-			set {_error} to last vixio error
-			if {_error} is set:
+			set {_error} to the last vixio error
+			if permCheck({_error}):
 				sendMessage("%{_error}%", event-channel, event-message)
 				stop
 			sendMessage("%{_user}%##%discriminator of {_user}% has been banned", event-channel, event-message)
@@ -271,8 +278,8 @@ discord command unban <string> [<string>]:
 				needReason(event-message, event-channel)
 				stop			
 			retrieve the bans of event-guild
-			set {_error} to last vixio error
-			if {_error} is set:
+			set {_error} to the last vixio error
+			if permCheck({_error}):
 				sendMessage("%{_error}%", event-channel, event-message)
 				stop
 			if grabbed bans is not set:
@@ -282,8 +289,8 @@ discord command unban <string> [<string>]:
 				if id of loop-value is arg-1:
 					retrieve user with id "%id of loop-value%" and store them in {_user}
 					unban loop-value from event-guild
-					set {_error} to last vixio error
-					if {_error} is set:
+					set {_error} to the last vixio error
+					if permCheck({_error}):
 						sendMessage("%{_error}%", event-channel, event-message)
 						stop
 					sendMessage("%{_user}%##%discriminator of {_user}% has been unbanned", event-channel, event-message)
@@ -420,8 +427,8 @@ discord command mute <member> [<string>]:
 				sendMessage("%arg-1%##%discriminator of arg-1% is already muted", event-channel, event-message)
 				stop
 			add {mutedRole} to roles of arg-1
-			set {_error} to last vixio error
-			if {_error} is set:
+			set {_error} to the last vixio error
+			if permCheck({_error}):
 				sendMessage("%{_error}%", event-channel, event-message)
 				stop
 			set {evaders::%arg-1%} to true
@@ -456,8 +463,8 @@ discord command unmute <member> [<string>]:
 				sendMessage("That user is not currently muted", event-channel, event-message)
 				stop
 			remove {mutedRole} from roles of arg-1
-			set {_error} to last vixio error 
-			if {_error} is set:
+			set {_error} to the last vixio error
+			if permCheck({_error}):
 				sendMessage("I ran into an error! `%{_error}%`", event-channel, event-message)
 				stop
 			if {tempMute::%arg-1%} is true:
@@ -487,8 +494,8 @@ discord command kick <member> [<string>]:
 				needReason(event-message, event-channel)
 				stop
 			kick arg-1 from event-guild due to arg-2 with event-bot
-			set {_error} to last vixio error
-			if {_error} is set:
+			set {_error} to the last vixio error
+			if permCheck({_error}):
 				sendMessage("%{_error}%", event-channel, event-message)
 				stop
 			if bot state of arg-1 is false:
@@ -520,8 +527,8 @@ discord command purge <number>:
 			set {_messages::*} to grabbed messages
 			delete {_messages::1}
 			purge {_messages::*} with event-bot
-			set {_error} to last vixio error 
-			if {_error} is set:
+			set {_error} to the last vixio error
+			if permCheck({_error}):
 				sendMessage("I ran into an error! `%{_error}%`", event-channel, event-message)
 				stop
 			sendMessage("I have successfully purged %arg-1% messages", event-channel, event-message)
@@ -553,8 +560,8 @@ discord command tempmute <member> [<string>] [<timespan>]:
 				sendMessage("That user is already muted", event-channel, event-message)
 				stop
 			add {mutedRole} to roles of arg-1
-			set {_error} to last vixio error 
-			if {_error} is set:
+			set {_error} to the last vixio error
+			if permCheck({_error}):
 				sendMessage("I ran into an error! `%{_error}%`", event-channel, event-message)
 				stop
 			if {punishment::tempmute::%arg-1%::count} is not set:
