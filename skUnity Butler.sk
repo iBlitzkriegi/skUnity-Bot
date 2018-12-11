@@ -40,6 +40,7 @@ function needReason(message: message, channel: channel):
 	
 # Function to test perm errors
 function permCheck(string: permission) :: boolean:
+	if {_permission} is not set:
 		return false
 	if {_permission} contains "run the action send message with":
 		return false
