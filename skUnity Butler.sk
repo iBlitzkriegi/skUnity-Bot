@@ -486,13 +486,13 @@ discord command kick <member> [<string>]:
 			if arg-2 is not set:
 				needReason(event-message, event-channel)
 				stop
-			if bot state of arg-1 is false:
-				send "You have been kicked from the skUnity Discord for `%arg-2%`." to arg-1 with event-bot
 			kick arg-1 from event-guild due to arg-2 with event-bot
 			set {_error} to last vixio error
 			if {_error} is set:
 				sendMessage("%{_error}%", event-channel, event-message)
 				stop
+			if bot state of arg-1 is false:
+				send "You have been kicked from the skUnity Discord for `%arg-2%`." to arg-1 with event-bot
 			sendMessage("I have successfully kicked %arg-1%##%discriminator of arg-1% from the server", event-channel, event-message)
 			if {kicked::%arg-1%} is not set:
 				set {kicked::%arg-1%} to 1
