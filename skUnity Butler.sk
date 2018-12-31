@@ -85,11 +85,44 @@ on reaction add seen by "{@bot}":
 		stop
 	if the id of event-channel is the id of {channel}:
 		if event-member is staff:
-			set {_} to the name of event-bot
+			set {_} to the name of event-emote
 			if {_} is "regional_indicator_symbol_r":
 				remove event-emote added by event-user from event-message
 				set {reason::%event-user%} to event-message
 				send "You've requested to modify the reason of a message in the staff log channel, if this was by accident, reply with `cancel`. Otherwise, reply with the new reason." to event-user with event-bot
+				stop
+			set {_count} to 0
+			loop split content of event-message at nl:
+				add 1 to {_count}
+				if {_count} is 1:
+					set {_type} to loop-value
+				if loop-value contains "User":
+					set {_user} to loop-value
+			set {_user::*} to {_user} split at  " "
+			set {_id} to {_user::3}
+			replace all "(" with "" in {_id}
+			replace all ")" with "" in {_id}
+			if {_type} contains "Auto-Mute":
+				if {_} is "white_check_mark":
+					set {_member} to user with id {_id} in {guild}
+					if {_member} is not set:
+						stop
+					set {evaders::%{_member}%} to true
+					if {Mutes::%{_member}%} is not set:
+						set {Mutes::%{_member}%} to 1
+					else:
+						add 1 to {Mutes::%{_member}%}
+					set {Mutes::%arg-1%::%{Mutes::%arg-1%}%} to "spam"
+					send "You have been muted for spam and will be unmuted at the responsible staff member's discretion." to {_member} with event-bot
+					set {_m} to a message builder
+					append line "**-=Mute=-**"
+					append line "**User**: %{_member}%##%discriminator of {_member}% (%id of {_member}%)"
+					append line "**Reason**: spam"
+					append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%"
+					reset reactions of event-message with event-bot
+					edit event-message to show {_m}
+					add reaction "regional_indicator_symbol_r" to event-message with event-bot
+			
 					
 on direct message received:
 	if {reason::%event-user%} is set:
@@ -766,6 +799,9 @@ on guild message received:
 						append line "**Message**: %content of event-message%"
 					append line "here"
 					send {_} to {channel} with "{@bot}" and store it in {_msg}
+					add reaction "white_check_mark" to {_msg} with event-bot 
+					add reaction "hammer" to {_msg} with event-bot 
+					add reaction "x" to {_msg} with event-bot 
 
 #Clears out lastMessage var if it wasn't marked as spam after 2 minutes					
 every minute:
