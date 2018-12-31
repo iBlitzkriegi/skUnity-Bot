@@ -121,6 +121,7 @@ on reaction add seen by "{@bot}":
 					append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%"
 					reset reactions of event-message with event-bot
 					edit event-message to show {_m}
+					wait 3 seconds
 					add reaction "regional_indicator_symbol_r" to event-message with event-bot
 				else if {_} is "hammer":
 					if user with id {_id} in {guild} is not set:
@@ -142,8 +143,28 @@ on reaction add seen by "{@bot}":
 					append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%"
 					reset reactions of event-message with event-bot
 					edit event-message to show {_m}
+					wait 3 seconds
 					add reaction "regional_indicator_symbol_r" to event-message with event-bot
-					
+				else if {_} is "x":
+					set {_member} to user with id {_id} in {guild}
+					if {_member} is not set:
+						stop
+					remove {mutedRole} from roles of {_member}
+					set {_error} to the last vixio error
+					if permCheck({_error}):
+						edit event-message to show "Ran into a permission error! Not able to unmute!"
+						stop
+					reset reactions of event-message with event-bot
+					set {evaders::%{_member}%} to false
+					set {_m} to a new message builder
+					append line "**-=Un-Mute=-**"
+					append line "**User**: %{_member}%##%discriminator of {_member}% (%id of {_member}%)"
+					append line "**Reason**: Unmute by Moderator"
+					append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%"
+					edit event-message to show {_m}
+					wait 3 seconds
+					add reaction "regional_indicator_symbol_r" to event-message with event-bot
+				
 			
 					
 on direct message received:
@@ -816,6 +837,7 @@ on guild message received:
 					append line "**User**: %event-user%##%discriminator of event-user% (%id of event-user%)"
 					append line "**Reason**: Spam"
 					append line "**Channel**: %event-channel%"
+					append line "**Time**: %now%"
 					set {_t} to "%text of {_}% %content of event-message%"
 					if length of {_t} is less than 2000:
 						append line "**Message**: %content of event-message%"
