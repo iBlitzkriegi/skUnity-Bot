@@ -759,6 +759,7 @@ on guild message received:
 					append line "**-=Auto-Mute=-**"
 					append line "**User**: %event-user%##%discriminator of event-user% (%id of event-user%)"
 					append line "**Reason**: Spam"
+					append line "**Channel**: %event-channel%"
 					append line "@here"
 					send {_} to {channel} with "{@bot}" and store it in {_msg}
 
@@ -775,3 +776,4 @@ every minute:
 # Clear stored messages on shutdown 
 on skript unload:
 	clear {lastMessage::*}
+	
