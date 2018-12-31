@@ -85,7 +85,8 @@ on reaction add seen by "{@bot}":
 		stop
 	if the id of event-channel is the id of {channel}:
 		if event-member is staff:
-			if the name of event-emote is "regional_indicator_symbol_r":
+			set {_} to the name of event-bot
+			if {_} is "regional_indicator_symbol_r":
 				remove event-emote added by event-user from event-message
 				set {reason::%event-user%} to event-message
 				send "You've requested to modify the reason of a message in the staff log channel, if this was by accident, reply with `cancel`. Otherwise, reply with the new reason." to event-user with event-bot
@@ -760,7 +761,10 @@ on guild message received:
 					append line "**User**: %event-user%##%discriminator of event-user% (%id of event-user%)"
 					append line "**Reason**: Spam"
 					append line "**Channel**: %event-channel%"
-					append line "@here"
+					set {_t} to "%text of {_}% %content of event-message%"
+					if length of {_t} is less than 2000:
+						append line "**Message**: %content of event-message%"
+					append line "here"
 					send {_} to {channel} with "{@bot}" and store it in {_msg}
 
 #Clears out lastMessage var if it wasn't marked as spam after 2 minutes					
