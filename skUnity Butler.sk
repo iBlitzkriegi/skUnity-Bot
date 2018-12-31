@@ -112,7 +112,7 @@ on reaction add seen by "{@bot}":
 						set {Mutes::%{_member}%} to 1
 					else:
 						add 1 to {Mutes::%{_member}%}
-					set {Mutes::%arg-1%::%{Mutes::%arg-1%}%} to "spam"
+					set {Mutes::%{_member}%::%{Mutes::%{_member}%}%} to "spam"
 					send "You have been muted for spam and will be unmuted at the responsible staff member's discretion." to {_member} with event-bot
 					set {_m} to a message builder
 					append line "**-=Mute=-**"
@@ -122,6 +122,28 @@ on reaction add seen by "{@bot}":
 					reset reactions of event-message with event-bot
 					edit event-message to show {_m}
 					add reaction "regional_indicator_symbol_r" to event-message with event-bot
+				else if {_} is "hammer":
+					if user with id {_id} in {guild} is not set:
+						retrieve user with id {_id} and store them in {_user}
+						if {_user} is not set:
+							stop
+					else:
+						set {_user} to user with id {_id} in {guild}
+					ban {_user} from {guild} due to "Spam"
+					set {_error} to the last vixio error
+					if permCheck({_error}):
+						edit event-message to show "Unable to ban that user, lacking permission to do so!"
+						stop
+					send "You have been banned from the skUnity Discord for `spam`. If you wish to appeal this ban, you may talk to %event-user%##%discriminator of event-user% at a later date." to {_user} with event-bot
+					set {_m} to a new message builder
+					append line "**-=Ban=-**"
+					append line "**User**: %{_user}%##%discriminator of {_user}% (%id of {_user}%)"
+					append line "**Reason**: Spam"
+					append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%"
+					reset reactions of event-message with event-bot
+					edit event-message to show {_m}
+					add reaction "regional_indicator_symbol_r" to event-message with event-bot
+					
 			
 					
 on direct message received:
@@ -732,7 +754,7 @@ discord command user [<member>]:
 			append line "__**General**__:" to {_m}
 			set {_status} to status of {_user}
 			append line "Status: **%{_status}.toString().toUpperCase()%**" to {_m}
-			append line "Nick: **%nickname of {_user} in event-guild%**" to {_m}
+			append line "Nick: **%discord nickname of {_user} in event-guild%**" to {_m}
 			append line "Game: **%{_game}%**" to {_m}
 			append line "Bot: **%{_bot}.toString().toUpperCase()%**" to {_m}
 			append line "Joined Guild: **%{_guildDate::1}%**" to {_m}
