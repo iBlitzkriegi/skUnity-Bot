@@ -799,6 +799,19 @@ on guild message received seen by "{@bot}":
 		if {evaders::%event-user%} is true:
 			delete event-message with event-bot
 			add {mutedRole} to roles of event-member
+#Event that deletes those annoying dating discord ads -.-			
+on guild message received seen by "{@bot}":
+	id of event-guild is id of {guild}
+	if content of event-message contains "Sex dating Discord":
+		if content of event-message contains "http://discord.":
+			delete event-message with event-bot
+			set {_} to a message builder
+			append line "**-=Suspicious message deleted=-**"
+			append line "**User**: %event-user%"
+			append line "**Channel**: %event-channel%"
+			append line "**Message**: %content of event-message%"
+			send {_} to {logChannel} with event-bot
+			
 
 # Logger to send all messages to the logging guild		
 on guild message received:
