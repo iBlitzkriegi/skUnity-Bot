@@ -23,7 +23,7 @@ on skript load:
 	set {administratorRole} to role with id "{@administratorRole}"
 	mark "{@bot}" as playing "on skunity.com"
 	loop the text channels of {logGuild}:
-		set {channel::%name of loop-value%} to loop-channel
+		set {channel::%discord name of loop-value%} to loop-channel
 	broadcast "skUnity bot has successfully finished loading!"
 		
 # Main function to send messages and store them to be deleted by a staff member later
@@ -73,7 +73,7 @@ on reaction add seen by "{@bot}":
 	if bot state of event-user is true:
 		stop
 	if event-member is staff:
-		if name of event-emote is "x":
+		if discord name of event-emote is "x":
 			if {{@bot}.%event-message%} is set:
 				delete random message out of {{@bot}.%event-message%} with "{@bot}"
 				delete event-message with "{@bot}"
@@ -83,9 +83,9 @@ on reaction add seen by "{@bot}":
 on reaction add seen by "{@bot}":
 	if bot state of event-user is true:
 		stop
-	if the id of event-channel is the id of {channel}:
+	if the discord id of event-channel is the discord id of {channel}:
 		if event-member is staff:
-			set {_} to the name of event-emote
+			set {_} to the discord name of event-emote
 			if {_} is "regional_indicator_symbol_r":
 				remove event-emote added by event-user from event-message
 				set {reason::%event-user%} to event-message
@@ -116,7 +116,7 @@ on reaction add seen by "{@bot}":
 					send "You have been muted for spam and will be unmuted at the responsible staff member's discretion." to {_member} with event-bot
 					set {_m} to a message builder
 					append line "**-=Mute=-**"
-					append line "**User**: %{_member}%##%discriminator of {_member}% (%id of {_member}%)"
+					append line "**User**: %{_member}%##%discriminator of {_member}% (%discord id of {_member}%)"
 					append line "**Reason**: spam"
 					append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%"
 					reset reactions of event-message with event-bot
@@ -138,7 +138,7 @@ on reaction add seen by "{@bot}":
 					send "You have been banned from the skUnity Discord for `spam`. If you wish to appeal this ban, you may talk to %event-user%##%discriminator of event-user% at a later date." to {_user} with event-bot
 					set {_m} to a new message builder
 					append line "**-=Ban=-**"
-					append line "**User**: %{_user}%##%discriminator of {_user}% (%id of {_user}%)"
+					append line "**User**: %{_user}%##%discriminator of {_user}% (%discord id of {_user}%)"
 					append line "**Reason**: Spam"
 					append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%"
 					reset reactions of event-message with event-bot
@@ -158,7 +158,7 @@ on reaction add seen by "{@bot}":
 					set {evaders::%{_member}%} to false
 					set {_m} to a new message builder
 					append line "**-=Un-Mute=-**"
-					append line "**User**: %{_member}%##%discriminator of {_member}% (%id of {_member}%)"
+					append line "**User**: %{_member}%##%discriminator of {_member}% (%discord id of {_member}%)"
 					append line "**Reason**: Unmute by Moderator"
 					append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%"
 					edit event-message to show {_m}
@@ -287,7 +287,7 @@ discord command ban <string> [<string>] [<number>]:
 			sendMessage("%{_user}%##%discriminator of {_user}% has been banned", event-channel, event-message)
 			set {_m} to a new message builder
 			append line "**-=Ban=-**" to {_m}
-			append line "**User**: %{_user}%##%discriminator of {_user}% (%id of {_user}%)" to {_m}
+			append line "**User**: %{_user}%##%discriminator of {_user}% (%discord id of {_user}%)" to {_m}
 			append line "**Reason**: %arg-2%" to {_m}
 			append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
 			sendLog({_m})
@@ -364,8 +364,8 @@ discord command unban <string> [<string>]:
 				sendMessage("The provided user was not banned", event-channel, event-message)
 				stop
 			loop grabbed bans:
-				if id of loop-value is arg-1:
-					retrieve user with id "%id of loop-value%" and store them in {_user}
+				if discord id of loop-value is arg-1:
+					retrieve user with id "%discord id of loop-value%" and store them in {_user}
 					unban loop-value from event-guild
 					set {_error} to the last vixio error
 					if permCheck({_error}):
@@ -374,7 +374,7 @@ discord command unban <string> [<string>]:
 					sendMessage("%{_user}%##%discriminator of {_user}% has been unbanned", event-channel, event-message)
 					set {_m} to a new message builder
 					append line "**-=Pardon=-**" to {_m}
-					append line "**User**: %name of loop-value%##%discriminator of loop-value%" to {_m}
+					append line "**User**: %discord name of loop-value%##%discriminator of loop-value%" to {_m}
 					append line "**Reason**: %arg-2%" to {_m}
 					append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
 					sendLog({_m})
@@ -404,7 +404,7 @@ discord command warn <member> [<string>]:
 			set {_m} to a new message builder
 			set {Warns::%arg-1%::%{Warnings::%arg-1%}%} to arg-2
 			append line "**-=Warning=-**" to {_m}
-			append line "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)" to {_m}
+			append line "**User**: %arg-1%##%discriminator of arg-1% (%discord id of arg-1%)" to {_m}
 			append line "**Reason**: %arg-2%" to {_m}
 			append line "**Count**: %{Warnings::%arg-1%}%" to {_m}
 			append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
@@ -516,10 +516,10 @@ discord command mute <member> [<string>]:
 				add 1 to {Mutes::%arg-1%}
 			set {Mutes::%arg-1%::%{Mutes::%arg-1%}%} to arg-2
 			send "You have been muted for `%arg-2%` and will be unmuted at the responsible staff member's discretion." to arg-1 with event-bot
-			sendMessage("%name of arg-1%##%discriminator of arg-1% has been muted", event-channel, event-message)
+			sendMessage("%discord name of arg-1%##%discriminator of arg-1% has been muted", event-channel, event-message)
 			set {_m} to a new message builder
 			append line "**-=Mute=-**" to {_m}
-			append line "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)" to {_m}
+			append line "**User**: %arg-1%##%discriminator of arg-1% (%discord id of arg-1%)" to {_m}
 			append line "**Reason**: %arg-2%" to {_m}
 			append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
 			sendLog({_m})
@@ -554,7 +554,7 @@ discord command unmute <member> [<string>]:
 			set {evaders::%arg-1%} to false
 			set {_m} to a new message builder
 			append line "**-=Un-Mute=-**" to {_m}
-			append line "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)" to {_m}
+			append line "**User**: %arg-1%##%discriminator of arg-1% (%discord id of arg-1%)" to {_m}
 			append line "**Reason**: %arg-2%" to {_m}
 			append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
 			sendLog({_m})			
@@ -586,7 +586,7 @@ discord command kick <member> [<string>]:
 			set {kicked::%arg-1%::%{kicked::%arg-1%}%::reason} to arg-2
 			set {_m} to a new message builder
 			append line "**-=Kick=-**" to {_m}
-			append line "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)" to {_m}
+			append line "**User**: %arg-1%##%discriminator of arg-1% (%discord id of arg-1%)" to {_m}
 			append line "**Reason**: %arg-2%" to {_m}
 			append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
 			sendLog({_m})
@@ -657,7 +657,7 @@ discord command tempmute <member> [<string>] [<timespan>]:
 			sendMessage("I have successfully muted %arg-1%##%discriminator of arg-1% for %arg-3%", event-channel, event-message)
 			set {_m} to a new message builder
 			append line "**-=Temp-Mute=-**" to {_m}
-			append line "**User**: %arg-1%##%discriminator of arg-1% (%id of arg-1%)" to {_m}
+			append line "**User**: %arg-1%##%discriminator of arg-1% (%discord id of arg-1%)" to {_m}
 			append line "**Reason**: %arg-2%" to {_m}
 			append line "**Amount of time**: %arg-3%" to {_m}
 			append line "**Responsible Moderator**: %event-user%##%discriminator of event-user%" to {_m}
@@ -669,7 +669,7 @@ every minute:
 		set {_length} to {tempMute::%loop-index%::length}
 		set {_time} to {tempMute::%loop-index%::time}
 		set {_difference} to "%difference between {_time} and now%"
-		if difference between {tempMute::%loop-index%::time} and now is more than {tempMute::%loop-index%::length}:
+		if {tempMute::%loop-index%::time} was more than {tempMute::%loop-index%::length} ago:
 			wait 3 seconds
 			remove {mutedRole} from roles of {tempMute::%loop-index%} in guild of {channel} with "{@bot}"
 			delete {tempMute::%loop-index%::*}
@@ -765,11 +765,11 @@ discord command user [<member>]:
 				set {_game} to game of {_user}
 			else:
 				set {_game} to "NONE"
-			set the author info of the embed to author named "Who is %name of {_user}%" with no url and no icon 
+			set the author info of the embed to author named "Who is %discord name of {_user}%" with no url and no icon 
 			set the thumbnail of embed to "%avatar of {_user}%"
 			set {_m} to a message builder
-			append line "Name: **%name of {_user}%##%discriminator of {_user}%**" to {_m}
-			append line "ID: **%id of {_user}%**" to {_m}
+			append line "Name: **%discord name of {_user}%##%discriminator of {_user}%**" to {_m}
+			append line "ID: **%discord id of {_user}%**" to {_m}
 			append line "Joined Discord: **%{_discordDate::1}%**" to {_m}
 			append nl to {_m}
 			append line "__**General**__:" to {_m}
@@ -794,14 +794,14 @@ on member join guild seen by "{@bot}":
 # TODO: Combine all three guild message rec events into one 			
 # Event to stop muted people from speaking if they are trying to mute evade
 on guild message received seen by "{@bot}":
-	id of event-guild is id of {guild}
+	discord id of event-guild is discord id of {guild}
 	if {evaders::%event-user%} is set:
 		if {evaders::%event-user%} is true:
 			delete event-message with event-bot
 			add {mutedRole} to roles of event-member
 #Event that deletes those annoying dating discord ads -.-			
 on guild message received seen by "{@bot}":
-	id of event-guild is id of {guild}
+	discord id of event-guild is discord id of {guild}
 	if content of event-message contains "Sex dating Discord":
 		if content of event-message contains "http://discord.":
 			delete event-message with event-bot
@@ -810,20 +810,20 @@ on guild message received seen by "{@bot}":
 			append line "**User**: %event-user%"
 			append line "**Channel**: %event-channel%"
 			append line "**Message**: %content of event-message%"
-			send {_} to {logChannel} with event-bot
+			send {_} to {channel} with event-bot
 			
 
 # Logger to send all messages to the logging guild		
 on guild message received:
-	id of event-guild is not id of {logGuild}
-	set {_channel} to {channel::%name of event-channel%}
+	discord id of event-guild is not discord id of {logGuild}
+	set {_channel} to {channel::%discord name of event-channel%}
 	set {_role} to first element out of roles of event-member
 	create embed:
 		set the description of embed to event-string
 		if "%avatar of event-user%" is "null":
-			set the author info of the embed to author named name of event-user with url "%jump url of event-message%" and icon "%default avatar of event-user%"
+			set the author info of the embed to author named discord name of event-user with url "%jump url of event-message%" and icon "%default avatar of event-user%"
 		else:
-			set the author info of the embed to author named name of event-user with url "%jump url of event-message%" and icon "%avatar of event-user%"
+			set the author info of the embed to author named discord name of event-user with url "%jump url of event-message%" and icon "%avatar of event-user%"
 		set the colour of the embed to color of {_role}
 		set the timestamp of embed to now
 	send the last created embed to {_channel} with event-bot
@@ -831,7 +831,7 @@ on guild message received:
 # Spam detection system to auto mute spammers	
 on guild message received:
 	if event-member is not staff:
-		id of event-guild is id of {guild}
+		discord id of event-guild is discord id of {guild}
 		bot state of event-user is false
 		set {lastMessage::%event-user%} to content of event-message
 		if {lastMessage::%event-user%::%content of event-message%} is not set:
@@ -847,7 +847,7 @@ on guild message received:
 					set {evaders::%event-user%} to true
 					set {_} to a message builder
 					append line "**-=Auto-Mute=-**"
-					append line "**User**: %event-user%##%discriminator of event-user% (%id of event-user%)"
+					append line "**User**: %event-user%##%discriminator of event-user% (%discord id of event-user%)"
 					append line "**Reason**: Spam"
 					append line "**Channel**: %event-channel%"
 					append line "**Time**: %now%"
